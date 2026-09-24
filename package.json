@@ -1,0 +1,22 @@
+{
+  "name": "badgi-studio",
+  "private": true,
+  "version": "0.0.1",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "dev:api": "pnpm --filter @badgi-studio/api start:dev",
+    "build:api": "pnpm --filter @badgi-studio/api build",
+    "prisma:migrate": "pnpm --filter @badgi-studio/api exec prisma migrate dev",
+    "prisma:generate": "pnpm --filter @badgi-studio/api exec prisma generate",
+    "prisma:seed": "pnpm --filter @badgi-studio/api exec prisma db seed",
+    "prisma:studio": "pnpm --filter @badgi-studio/api exec prisma studio",
+    "test:api": "pnpm --filter @badgi-studio/api test",
+    "test:api:e2e": "pnpm --filter @badgi-studio/api test:e2e"
+  }
+}

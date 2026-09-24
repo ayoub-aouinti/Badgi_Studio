@@ -1,0 +1,234 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Simulated Badgi tables (local dev; real Badgi API takes over later) ---
+
+model Event {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  startsAt  DateTime? @map("starts_at")
+  endsAt    DateTime? @map("ends_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  attendees          Attendee[]
+  studioConfig       StudioConfig?
+  kiosks             Kiosk[]
+  studioParticipants StudioParticipant[]
+
+  @@map("events")
+}
+
+model Attendee {
+  id           String  @id @default(uuid())
+  eventId      String  @map("event_id")
+  firstName    String  @map("first_name")
+  lastName     String  @map("last_name")
+  email        String?
+  whatsappE164 String? @map("whatsapp_e164")
+  specialty    String?
+  // Opaque token encoded in the participant's badge QR code (never personal data in clear).
+  badgeToken   String  @unique @map("badge_token")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event               Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  studioParticipants  StudioParticipant[]
+
+  @@index([eventId])
+  @@map("attendees")
+}
+
+// --- Badgi Studio tables ---
+
+model StudioConfig {
+  id              String  @id @default(uuid())
+  eventId         String  @unique @map("event_id")
+  enabled         Boolean @default(false)
+  frameTemplate   String  @default("default") @map("frame_template")
+  sponsorName     String? @map("sponsor_name")
+  sponsorLogoKey  String? @map("sponsor_logo_key")
+  retentionDays   Int     @default(30) @map("retention_days")
+  wallToken       String  @unique @map("wall_token")
+
+  event  Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  styles StudioStyle[]
+
+  @@map("studio_configs")
+}
+
+model StudioStyle {
+  id         String  @id @default(uuid())
+  configId   String  @map("config_id")
+  name       String
+  prompt     String
+  model      String
+  previewKey String? @map("preview_key")
+  sortOrder  Int     @default(0) @map("sort_order")
+  active     Boolean @default(true)
+
+  config    StudioConfig    @relation(fields: [configId], references: [id], onDelete: Cascade)
+  portraits Portrait[]
+
+  @@index([configId])
+  @@map("studio_styles")
+}
+
+enum KioskStatus {
+  ONLINE
+  OFFLINE
+}
+
+model Kiosk {
+  id              String      @id @default(uuid())
+  eventId         String      @map("event_id")
+  name            String
+  pairingCode     String      @unique @map("pairing_code")
+  deviceTokenHash String?     @map("device_token_hash")
+  lastSeenAt      DateTime?   @map("last_seen_at")
+  status          KioskStatus @default(OFFLINE)
+
+  event           Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  captureSessions CaptureSession[]
+
+  @@index([eventId])
+  @@map("kiosks")
+}
+
+enum ParticipantSource {
+  BADGE
+  MANUAL
+}
+
+model StudioParticipant {
+  id           String            @id @default(uuid())
+  eventId      String            @map("event_id")
+  attendeeId   String?           @map("attendee_id")
+  firstName    String            @map("first_name")
+  lastName     String            @map("last_name")
+  email        String?
+  whatsappE164 String?           @map("whatsapp_e164")
+  specialty    String?
+  source       ParticipantSource
+
+  event           Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  attendee        Attendee?        @relation(fields: [attendeeId], references: [id])
+  consents        Consent[]
+  captureSessions CaptureSession[]
+
+  @@index([eventId])
+  @@map("studio_participants")
+}
+
+enum ConsentType {
+  AI_PROCESSING
+  WALL
+  SPONSOR
+}
+
+model Consent {
+  id          String      @id @default(uuid())
+  participantId String    @map("participant_id")
+  type        ConsentType
+  granted     Boolean
+  grantedAt   DateTime    @map("granted_at")
+  textVersion String      @map("text_version")
+
+  participant StudioParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([participantId])
+  @@map("consents")
+}
+
+enum CaptureSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model CaptureSession {
+  id            String               @id @default(uuid())
+  kioskId       String               @map("kiosk_id")
+  participantId String               @map("participant_id")
+  startedAt     DateTime             @default(now()) @map("started_at")
+  endedAt       DateTime?            @map("ended_at")
+  status        CaptureSessionStatus @default(IN_PROGRESS)
+
+  kiosk       Kiosk             @relation(fields: [kioskId], references: [id], onDelete: Cascade)
+  participant StudioParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  portraits   Portrait[]
+
+  @@index([kioskId])
+  @@index([participantId])
+  @@map("capture_sessions")
+}
+
+enum PortraitStatus {
+  QUEUED
+  MODERATING
+  GENERATING
+  READY
+  REJECTED
+  FAILED
+}
+
+model Portrait {
+  id                String         @id @default(uuid())
+  sessionId         String         @map("session_id")
+  styleId           String         @map("style_id")
+  selfieKey         String         @map("selfie_key")
+  resultKey         String?        @map("result_key")
+  framedKey         String?        @map("framed_key")
+  status            PortraitStatus @default(QUEUED)
+  providerRequestId String?        @map("provider_request_id")
+  costUsd           Decimal?       @map("cost_usd") @db.Decimal(10, 4)
+  onWall            Boolean        @default(false) @map("on_wall")
+  pinned            Boolean        @default(false)
+  publicCode        String         @unique @map("public_code")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  purgeAt           DateTime       @map("purge_at")
+
+  session    CaptureSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  style      StudioStyle    @relation(fields: [styleId], references: [id])
+  deliveries Delivery[]
+
+  @@index([status])
+  @@index([purgeAt])
+  @@index([sessionId])
+  @@map("portraits")
+}
+
+enum DeliveryChannel {
+  EMAIL
+  WHATSAPP
+  PRINT
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Delivery {
+  id                String         @id @default(uuid())
+  portraitId        String         @map("portrait_id")
+  channel           DeliveryChannel
+  recipient         String
+  status            DeliveryStatus @default(PENDING)
+  providerMessageId String?        @map("provider_message_id")
+  costUsd           Decimal?       @map("cost_usd") @db.Decimal(10, 4)
+  sentAt            DateTime?      @map("sent_at")
+  error             String?
+
+  portrait Portrait @relation(fields: [portraitId], references: [id], onDelete: Cascade)
+
+  @@index([portraitId])
+  @@map("deliveries")
+}

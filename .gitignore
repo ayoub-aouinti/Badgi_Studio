@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+build/
+*.tsbuildinfo
+
+# env
+.env
+.env.*.local
+
+# local storage / uploads (STORAGE_DRIVER=local)
+storage/
+
+# docker volumes mounted locally (if any)
+.docker-data/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# tests / coverage
+coverage/
+
+# editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# prisma
+apps/api/prisma/migrations/**/migration_lock.toml.bak
