@@ -1,0 +1,95 @@
+{
+  "common": {
+    "back": "Retour",
+    "or": "ou",
+    "recommended": "Recommandé",
+    "step": "Étape {{current}} sur {{total}}",
+    "poweredBy": "Offert par {{sponsor}}",
+    "fictionalExample": "Exemple fictif",
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer"
+  },
+  "pairing": {
+    "title": "Appairer la borne",
+    "description": "Saisissez le code à 6 chiffres affiché dans le tableau de bord.",
+    "codeLabel": "Code d'appairage",
+    "submit": "Appairer",
+    "invalidCode": "Code invalide ou déjà utilisé"
+  },
+  "home": {
+    "title": "Votre portrait IA en 30 secondes.",
+    "start": "Touchez pour commencer",
+    "example1": "Portrait pro",
+    "example2": "Caricature spécialité",
+    "example3": "Portrait peint"
+  },
+  "identify": {
+    "title": "Qui êtes-vous ?",
+    "scanCard": "Scanner mon badge Badgi",
+    "scanHint": "Placez le QR code de votre badge devant la caméra",
+    "manualButton": "Saisir mes informations"
+  },
+  "manual": {
+    "title": "Vos informations",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "Email",
+    "whatsapp": "WhatsApp",
+    "specialty": "Spécialité",
+    "specialtyOptional": "Spécialité (facultatif)",
+    "contactNote": "Email ou WhatsApp : au moins l'un des deux",
+    "continue": "Continuer"
+  },
+  "badge": {
+    "recognized": "Badge reconnu",
+    "greeting": "Bonjour {{firstName}} !",
+    "name": "Nom",
+    "specialty": "Spécialité",
+    "institution": "Établissement",
+    "email": "Email",
+    "badgeLabel": "Badge",
+    "notMe": "Ce n'est pas moi",
+    "confirm": "C'est bien moi, continuer"
+  },
+  "style": {
+    "title": "Choisissez votre style",
+    "descriptionPro": "Portrait sobre et professionnel, fond neutre",
+    "descriptionCaricature": "Caricature illustrée selon votre spécialité",
+    "descriptionPeint": "Effet peint, palette chaleureuse",
+    "consentTitle": "Consentements",
+    "consentAi": "J'accepte le traitement IA de ma photo (obligatoire)",
+    "consentWall": "J'accepte que mon portrait apparaisse sur le mur du congrès",
+    "consentSponsor": "J'accepte de partager mes coordonnées avec le sponsor",
+    "retentionNote": "Vos données sont supprimées automatiquement après 30 jours.",
+    "privacyLink": "Politique de confidentialité",
+    "takePhoto": "Prendre ma photo"
+  },
+  "capture": {
+    "instruction": "Placez votre visage dans l'ovale et souriez",
+    "group": "Groupe (jusqu'à 4)",
+    "shoot": "Prendre la photo"
+  },
+  "generation": {
+    "title": "Votre portrait prend forme…",
+    "liveTitle": "L'artiste IA vous dessine…",
+    "live": "EN DIRECT",
+    "stepModerating": "Photo vérifiée",
+    "stepSketch": "Esquisse",
+    "stepInk": "Encrage",
+    "stepColor": "Couleurs",
+    "stepFrame": "Cadre du congrès",
+    "timeoutError": "La génération prend plus de temps que prévu."
+  },
+  "result": {
+    "title": "Voilà, {{firstName}} !",
+    "sentWhatsapp": "Envoyé sur WhatsApp",
+    "sentEmail": "Envoyé par email",
+    "scanDownload": "Scannez pour télécharger en HD",
+    "scanWhatsapp": "Scannez pour recevoir sur WhatsApp",
+    "print": "Imprimer",
+    "tryAnotherStyle": "Essayer un autre style",
+    "finish": "Terminer",
+    "whatsappMessage": "Bonjour {{firstName}}, voici votre portrait du {{event}} ! Version HD : {{link}}"
+  }
+}

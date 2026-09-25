@@ -6,6 +6,9 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Kiosk/wall/dashboard run on separate origins (Vite dev servers, then static hosting).
+  app.enableCors({ origin: true });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

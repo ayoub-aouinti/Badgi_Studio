@@ -1,0 +1,95 @@
+{
+  "common": {
+    "back": "Back",
+    "or": "or",
+    "recommended": "Recommended",
+    "step": "Step {{current}} of {{total}}",
+    "poweredBy": "Sponsored by {{sponsor}}",
+    "fictionalExample": "Fictional example",
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "retry": "Retry"
+  },
+  "pairing": {
+    "title": "Pair the kiosk",
+    "description": "Enter the 6-digit code shown in the dashboard.",
+    "codeLabel": "Pairing code",
+    "submit": "Pair",
+    "invalidCode": "Invalid or already used code"
+  },
+  "home": {
+    "title": "Your AI portrait in 30 seconds.",
+    "start": "Touch to start",
+    "example1": "Professional portrait",
+    "example2": "Specialty caricature",
+    "example3": "Painted portrait"
+  },
+  "identify": {
+    "title": "Who are you?",
+    "scanCard": "Scan my Badgi badge",
+    "scanHint": "Hold your badge's QR code in front of the camera",
+    "manualButton": "Enter my information"
+  },
+  "manual": {
+    "title": "Your information",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "whatsapp": "WhatsApp",
+    "specialty": "Specialty",
+    "specialtyOptional": "Specialty (optional)",
+    "contactNote": "Email or WhatsApp: at least one is required",
+    "continue": "Continue"
+  },
+  "badge": {
+    "recognized": "Badge recognized",
+    "greeting": "Hello {{firstName}}!",
+    "name": "Name",
+    "specialty": "Specialty",
+    "institution": "Institution",
+    "email": "Email",
+    "badgeLabel": "Badge",
+    "notMe": "This isn't me",
+    "confirm": "Yes, this is me, continue"
+  },
+  "style": {
+    "title": "Choose your style",
+    "descriptionPro": "Clean professional portrait, neutral background",
+    "descriptionCaricature": "Illustrated caricature based on your specialty",
+    "descriptionPeint": "Painted effect, warm palette",
+    "consentTitle": "Consents",
+    "consentAi": "I agree to AI processing of my photo (required)",
+    "consentWall": "I agree to display my portrait on the congress wall",
+    "consentSponsor": "I agree to share my details with the sponsor",
+    "retentionNote": "Your data is automatically deleted after 30 days.",
+    "privacyLink": "Privacy policy",
+    "takePhoto": "Take my photo"
+  },
+  "capture": {
+    "instruction": "Place your face in the oval and smile",
+    "group": "Group (up to 4)",
+    "shoot": "Take the photo"
+  },
+  "generation": {
+    "title": "Your portrait is taking shape…",
+    "liveTitle": "The AI artist is drawing you…",
+    "live": "LIVE",
+    "stepModerating": "Photo verified",
+    "stepSketch": "Sketch",
+    "stepInk": "Ink",
+    "stepColor": "Color",
+    "stepFrame": "Congress frame",
+    "timeoutError": "Generation is taking longer than expected."
+  },
+  "result": {
+    "title": "Here it is, {{firstName}}!",
+    "sentWhatsapp": "Sent on WhatsApp",
+    "sentEmail": "Sent by email",
+    "scanDownload": "Scan to download in HD",
+    "scanWhatsapp": "Scan to receive on WhatsApp",
+    "print": "Print",
+    "tryAnotherStyle": "Try another style",
+    "finish": "Finish",
+    "whatsappMessage": "Hello {{firstName}}, here is your portrait from {{event}}! HD version: {{link}}"
+  }
+}

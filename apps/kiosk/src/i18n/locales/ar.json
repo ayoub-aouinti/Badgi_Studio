@@ -1,0 +1,95 @@
+{
+  "common": {
+    "back": "رجوع",
+    "or": "أو",
+    "recommended": "موصى به",
+    "step": "الخطوة {{current}} من {{total}}",
+    "poweredBy": "برعاية {{sponsor}}",
+    "fictionalExample": "مثال توضيحي",
+    "loading": "جارٍ التحميل…",
+    "error": "حدث خطأ ما",
+    "retry": "إعادة المحاولة"
+  },
+  "pairing": {
+    "title": "إقران الجهاز",
+    "description": "أدخل الرمز المكون من 6 أرقام المعروض في لوحة التحكم.",
+    "codeLabel": "رمز الإقران",
+    "submit": "إقران",
+    "invalidCode": "رمز غير صالح أو مستخدم بالفعل"
+  },
+  "home": {
+    "title": "صورتك بالذكاء الاصطناعي في 30 ثانية.",
+    "start": "المس للبدء",
+    "example1": "صورة احترافية",
+    "example2": "كاريكاتير حسب التخصص",
+    "example3": "صورة مرسومة"
+  },
+  "identify": {
+    "title": "من أنت؟",
+    "scanCard": "مسح شارة Badgi الخاصة بي",
+    "scanHint": "ضع رمز QR الخاص بشارتك أمام الكاميرا",
+    "manualButton": "إدخال معلوماتي"
+  },
+  "manual": {
+    "title": "معلوماتك",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "email": "البريد الإلكتروني",
+    "whatsapp": "واتساب",
+    "specialty": "التخصص",
+    "specialtyOptional": "التخصص (اختياري)",
+    "contactNote": "البريد الإلكتروني أو واتساب: أحدهما على الأقل مطلوب",
+    "continue": "متابعة"
+  },
+  "badge": {
+    "recognized": "تم التعرف على الشارة",
+    "greeting": "مرحباً {{firstName}}!",
+    "name": "الاسم",
+    "specialty": "التخصص",
+    "institution": "المؤسسة",
+    "email": "البريد الإلكتروني",
+    "badgeLabel": "الشارة",
+    "notMe": "هذا ليس أنا",
+    "confirm": "نعم هذا أنا، متابعة"
+  },
+  "style": {
+    "title": "اختر أسلوبك",
+    "descriptionPro": "صورة احترافية أنيقة بخلفية محايدة",
+    "descriptionCaricature": "كاريكاتير مصور حسب تخصصك",
+    "descriptionPeint": "تأثير مرسوم بألوان دافئة",
+    "consentTitle": "الموافقات",
+    "consentAi": "أوافق على معالجة صورتي بالذكاء الاصطناعي (إلزامي)",
+    "consentWall": "أوافق على عرض صورتي على جدار المؤتمر",
+    "consentSponsor": "أوافق على مشاركة بياناتي مع الراعي",
+    "retentionNote": "يتم حذف بياناتك تلقائياً بعد 30 يوماً.",
+    "privacyLink": "سياسة الخصوصية",
+    "takePhoto": "التقاط صورتي"
+  },
+  "capture": {
+    "instruction": "ضع وجهك داخل البيضاوي وابتسم",
+    "group": "مجموعة (حتى 4 أشخاص)",
+    "shoot": "التقاط الصورة"
+  },
+  "generation": {
+    "title": "صورتك تتشكل…",
+    "liveTitle": "الفنان الذكي يرسمك…",
+    "live": "مباشر",
+    "stepModerating": "تم التحقق من الصورة",
+    "stepSketch": "رسم أولي",
+    "stepInk": "تحبير",
+    "stepColor": "ألوان",
+    "stepFrame": "إطار المؤتمر",
+    "timeoutError": "التوليد يستغرق وقتاً أطول من المتوقع."
+  },
+  "result": {
+    "title": "ها هي، {{firstName}}!",
+    "sentWhatsapp": "تم الإرسال عبر واتساب",
+    "sentEmail": "تم الإرسال بالبريد الإلكتروني",
+    "scanDownload": "امسح للتنزيل بجودة عالية",
+    "scanWhatsapp": "امسح لاستلامها عبر واتساب",
+    "print": "طباعة",
+    "tryAnotherStyle": "تجربة أسلوب آخر",
+    "finish": "إنهاء",
+    "whatsappMessage": "مرحباً {{firstName}}، هذه صورتك من {{event}}! النسخة عالية الجودة: {{link}}"
+  }
+}

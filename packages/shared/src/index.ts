@@ -64,3 +64,44 @@ export interface PortraitReadyEvent {
   resultUrl: string;
   framedUrl: string;
 }
+
+// Kiosk API request/response shapes (apps/kiosk <-> apps/api, see docs/SPEC.md §API).
+export interface PairKioskResponse {
+  kioskId: string;
+  deviceToken: string;
+}
+
+export interface BadgeScanResponse {
+  attendeeId: string;
+  firstName: string;
+  lastName: string;
+  specialty?: string;
+  emailMasked?: string;
+  whatsappE164?: string;
+}
+
+export interface CreateParticipantRequest {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  whatsappE164?: string;
+  specialty?: string;
+  attendeeId?: string;
+}
+
+export interface CreateParticipantResponse {
+  participantId: string;
+}
+
+export interface CreateSessionRequest {
+  participantId: string;
+  consents: ConsentInput;
+}
+
+export interface CreateSessionResponse {
+  sessionId: string;
+}
+
+export interface CreatePortraitResponse {
+  portraitId: string;
+}
