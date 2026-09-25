@@ -56,7 +56,7 @@ export function IdentificationScreen() {
         <span className="absolute left-4 top-4 z-10 rounded-full bg-teal px-3 py-1 text-xs font-semibold text-white">
           {t('common.recommended')}
         </span>
-        <video ref={videoRef} className="h-64 w-full scale-x-[-1] object-cover opacity-80" muted playsInline />
+        <video ref={videoRef} className="h-64 w-full scale-x-[-1] object-cover opacity-80" muted playsInline autoPlay />
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="h-40 w-40 rounded-2xl border-2 border-dashed border-teal-vivid" />
         </div>

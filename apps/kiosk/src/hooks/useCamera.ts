@@ -21,6 +21,8 @@ export function useCamera(active: boolean) {
         stream = s;
         if (videoRef.current) {
           videoRef.current.srcObject = s;
+          // Setting srcObject does not auto-play in every browser; play() explicitly.
+          videoRef.current.play().catch(() => undefined);
         }
         setReady(true);
       })
@@ -38,6 +40,8 @@ export function useCamera(active: boolean) {
     if (!video) return Promise.resolve(null);
 
     const size = Math.min(video.videoWidth, video.videoHeight);
+    if (!size) return Promise.resolve(null);
+
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
