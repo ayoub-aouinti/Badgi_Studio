@@ -3,24 +3,46 @@ import { StudioStyle } from '@prisma/client';
 import sharp from 'sharp';
 import { AiProvider } from './ai-provider.interface';
 
-// Free, local "AI" effect (docs/SCREENS.md tints): color grading + sharpen/blur per style,
-// so each style is visually distinct without calling any paid image model.
+// Free, local "AI" effect: color grading + median smoothing + vignette per style, so each
+// style reads as a distinct treatment instead of a flat Instagram-style color-tint filter
+// (an earlier version used sharp's .tint(), which desaturates everything into one duotone
+// hue and looks nothing like a "painted" or "caricature" style — removed).
 type StylePipeline = {
-  tint: string;
   saturation: number;
   brightness: number;
+  hue: number;
+  contrast: number;
+  median?: number;
   sharpen: boolean;
-  blur?: number;
+  vignette: number;
 };
 
-const PRO: StylePipeline = { tint: '#2D4A6B', saturation: 0.9, brightness: 1.05, sharpen: true };
-const CARICATURE: StylePipeline = {
-  tint: '#9A3B20',
-  saturation: 1.5,
-  brightness: 1.1,
+const PRO: StylePipeline = {
+  saturation: 0.92,
+  brightness: 1.02,
+  hue: 0,
+  contrast: 1.1,
   sharpen: true,
+  vignette: 0.22,
 };
-const PEINT: StylePipeline = { tint: '#2C6FB0', saturation: 1.15, brightness: 1.0, sharpen: false, blur: 1.5 };
+const CARICATURE: StylePipeline = {
+  saturation: 1.65,
+  brightness: 1.05,
+  hue: 8,
+  contrast: 1.25,
+  median: 3,
+  sharpen: true,
+  vignette: 0.12,
+};
+const PEINT: StylePipeline = {
+  saturation: 1.3,
+  brightness: 1.0,
+  hue: 14,
+  contrast: 1.05,
+  median: 9,
+  sharpen: false,
+  vignette: 0.35,
+};
 
 function pipelineForStyle(style: StudioStyle): StylePipeline {
   const name = style.name.toLowerCase();
@@ -29,24 +51,48 @@ function pipelineForStyle(style: StudioStyle): StylePipeline {
   return PRO;
 }
 
+async function applyVignette(image: Buffer, strength: number): Promise<Buffer> {
+  if (!strength) return image;
+  const { width = 1024, height = 1024 } = await sharp(image).metadata();
+  const svg = `
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="v" cx="50%" cy="45%" r="72%">
+          <stop offset="55%" stop-color="black" stop-opacity="0" />
+          <stop offset="100%" stop-color="black" stop-opacity="${strength}" />
+        </radialGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#v)" />
+    </svg>
+  `;
+  return sharp(image)
+    .composite([{ input: Buffer.from(svg), blend: 'multiply' }])
+    .jpeg({ quality: 92 })
+    .toBuffer();
+}
+
 @Injectable()
 export class MockAiProvider implements AiProvider {
   async generate(selfie: Buffer, style: StudioStyle): Promise<Buffer> {
     const p = pipelineForStyle(style);
 
-    let pipeline = sharp(selfie)
-      .rotate()
-      .resize(1024, 1024, { fit: 'cover' })
-      .modulate({ saturation: p.saturation, brightness: p.brightness })
-      .tint(p.tint);
+    let pipeline = sharp(selfie).rotate().resize(1024, 1024, { fit: 'cover' });
 
-    if (p.blur) {
-      pipeline = pipeline.blur(p.blur);
+    if (p.median) {
+      // Median smoothing flattens fine texture into brush-stroke-like patches (oil-paint feel)
+      // while keeping edges, instead of a uniform blur.
+      pipeline = pipeline.median(p.median);
     }
+
+    pipeline = pipeline
+      .modulate({ saturation: p.saturation, brightness: p.brightness, hue: p.hue })
+      .linear(p.contrast, 128 * (1 - p.contrast));
+
     if (p.sharpen) {
       pipeline = pipeline.sharpen();
     }
 
-    return pipeline.jpeg({ quality: 90 }).toBuffer();
+    const graded = await pipeline.jpeg({ quality: 92 }).toBuffer();
+    return applyVignette(graded, p.vignette);
   }
 }
