@@ -1,12 +1,14 @@
+import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface ExampleCardProps {
   label: string;
   toneLight: string;
   toneDark: string;
+  icon: LucideIcon;
 }
 
-export function ExampleCard({ label, toneLight, toneDark }: ExampleCardProps) {
+export function ExampleCard({ label, toneLight, toneDark, icon: Icon }: ExampleCardProps) {
   const { t } = useTranslation();
 
   return (
@@ -15,7 +17,12 @@ export function ExampleCard({ label, toneLight, toneDark }: ExampleCardProps) {
         className="flex h-[110px] w-full items-center justify-center rounded-2xl"
         style={{ backgroundColor: toneLight }}
       >
-        <div className="h-10 w-10 rounded-full" style={{ backgroundColor: toneDark }} />
+        <div
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-white/60"
+          style={{ color: toneDark }}
+        >
+          <Icon size={30} strokeWidth={1.75} />
+        </div>
       </div>
       <p className="text-center text-xs font-semibold text-ink-soft">{label}</p>
       <span className="rounded-full bg-border-soft px-2 py-0.5 text-[10px] text-ink-soft-2">

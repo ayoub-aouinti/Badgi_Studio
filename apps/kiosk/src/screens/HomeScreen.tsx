@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Laugh, Paintbrush, UserRound } from 'lucide-react';
 import { useKiosk } from '../state/kiosk-context';
 import { Logo } from '../components/Logo';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
@@ -24,9 +25,9 @@ export function HomeScreen() {
         <h1 className="text-[2.4rem] font-extrabold leading-tight text-ink">{t('home.title')}</h1>
 
         <div className="flex w-full gap-3">
-          <ExampleCard label={t('home.example1')} toneLight="#DDE5EE" toneDark="#2D4A6B" />
-          <ExampleCard label={t('home.example2')} toneLight="#F8DDD3" toneDark="#9A3B20" />
-          <ExampleCard label={t('home.example3')} toneLight="#E9DCC2" toneDark="#2C6FB0" />
+          <ExampleCard label={t('home.example1')} toneLight="#DDE5EE" toneDark="#2D4A6B" icon={UserRound} />
+          <ExampleCard label={t('home.example2')} toneLight="#F8DDD3" toneDark="#9A3B20" icon={Laugh} />
+          <ExampleCard label={t('home.example3')} toneLight="#E9DCC2" toneDark="#2C6FB0" icon={Paintbrush} />
         </div>
       </div>
 

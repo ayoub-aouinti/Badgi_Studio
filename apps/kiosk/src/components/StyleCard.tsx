@@ -1,11 +1,11 @@
-import { Check } from 'lucide-react';
+import { Check, Laugh, Paintbrush, UserRound, type LucideIcon } from 'lucide-react';
 import type { KioskStyleDto } from '@badgi-studio/shared';
 
-function toneFor(name: string): { light: string; dark: string } {
+function toneFor(name: string): { light: string; dark: string; icon: LucideIcon } {
   const n = name.toLowerCase();
-  if (n.includes('caricature')) return { light: '#F8DDD3', dark: '#9A3B20' };
-  if (n.includes('peint')) return { light: '#E9DCC2', dark: '#2C6FB0' };
-  return { light: '#DDE5EE', dark: '#2D4A6B' };
+  if (n.includes('caricature')) return { light: '#F8DDD3', dark: '#9A3B20', icon: Laugh };
+  if (n.includes('peint')) return { light: '#E9DCC2', dark: '#2C6FB0', icon: Paintbrush };
+  return { light: '#DDE5EE', dark: '#2D4A6B', icon: UserRound };
 }
 
 interface StyleCardProps {
@@ -32,7 +32,7 @@ export function StyleCard({ style, description, selected, onSelect }: StyleCardP
         {style.previewUrl ? (
           <img src={style.previewUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="h-8 w-8 rounded-full" style={{ backgroundColor: tone.dark }} />
+          <tone.icon size={30} strokeWidth={1.75} style={{ color: tone.dark }} />
         )}
       </div>
       <div className="flex-1">
