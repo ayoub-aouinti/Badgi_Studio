@@ -9,6 +9,7 @@ import { RealtimeModule } from './realtime/realtime.module';
 import { KioskModule } from './kiosk/kiosk.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { PortraitsModule } from './portraits/portraits.module';
+import { WallModule } from './wall/wall.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { PortraitsModule } from './portraits/portraits.module';
     KioskModule,
     SessionsModule,
     PortraitsModule,
+    WallModule,
   ],
   controllers: [HealthController],
 })

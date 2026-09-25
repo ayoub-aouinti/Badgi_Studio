@@ -105,3 +105,31 @@ export interface CreateSessionResponse {
 export interface CreatePortraitResponse {
   portraitId: string;
 }
+
+// Wall API request/response shapes + WS events (apps/wall <-> apps/api).
+export interface WallFeedPortraitDto {
+  portraitId: string;
+  framedUrl: string;
+  participantName: string;
+  specialty?: string;
+  createdAt: string;
+}
+
+export interface WallFeedResponse {
+  eventName: string;
+  sponsorName?: string;
+  sponsorLogoUrl?: string;
+  portraitCount: number;
+  portraits: WallFeedPortraitDto[];
+}
+
+export interface WallNewEvent {
+  portraitId: string;
+  framedUrl: string;
+  participantName: string;
+  specialty?: string;
+}
+
+export interface WallRemoveEvent {
+  portraitId: string;
+}

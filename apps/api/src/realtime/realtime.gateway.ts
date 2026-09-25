@@ -6,7 +6,13 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { WS_EVENTS, PortraitProgressEvent, PortraitReadyEvent } from '@badgi-studio/shared';
+import {
+  WS_EVENTS,
+  PortraitProgressEvent,
+  PortraitReadyEvent,
+  WallNewEvent,
+  WallRemoveEvent,
+} from '@badgi-studio/shared';
 
 const WALL_ROOM = 'wall';
 
@@ -42,7 +48,11 @@ export class RealtimeGateway implements OnGatewayConnection {
     this.server.to(sessionRoom(event.sessionId)).emit(WS_EVENTS.PORTRAIT_READY, event);
   }
 
-  emitWallNew(payload: unknown) {
-    this.server.to(WALL_ROOM).emit(WS_EVENTS.WALL_NEW, payload);
+  emitWallNew(event: WallNewEvent) {
+    this.server.to(WALL_ROOM).emit(WS_EVENTS.WALL_NEW, event);
+  }
+
+  emitWallRemove(event: WallRemoveEvent) {
+    this.server.to(WALL_ROOM).emit(WS_EVENTS.WALL_REMOVE, event);
   }
 }

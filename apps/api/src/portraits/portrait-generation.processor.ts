@@ -70,9 +70,17 @@ export class PortraitGenerationProcessor extends WorkerHost {
     const framedKey = `portraits/${session.id}/${randomUUID()}-framed.jpg`;
     await this.storage.put(framedKey, framed, 'image/jpeg');
 
+    // The wall is opt-in (docs/SPEC.md: 3 separate consents — ai_processing/wall/sponsor).
+    // Look up the participant's latest WALL consent rather than assuming it was granted.
+    const wallConsent = await this.prisma.consent.findFirst({
+      where: { participantId: session.participantId, type: 'WALL' },
+      orderBy: { grantedAt: 'desc' },
+    });
+    const onWall = wallConsent?.granted ?? false;
+
     await this.prisma.portrait.update({
       where: { id: portrait.id },
-      data: { status: 'READY', resultKey, framedKey, onWall: true },
+      data: { status: 'READY', resultKey, framedKey, onWall },
     });
 
     const [resultUrl, framedUrl] = await Promise.all([
@@ -87,12 +95,15 @@ export class PortraitGenerationProcessor extends WorkerHost {
       resultUrl,
       framedUrl,
     });
-    this.realtime.emitWallNew({
-      portraitId: portrait.id,
-      framedUrl,
-      participantName: session.participant.firstName,
-      specialty: session.participant.specialty,
-    });
+
+    if (onWall) {
+      this.realtime.emitWallNew({
+        portraitId: portrait.id,
+        framedUrl,
+        participantName: session.participant.firstName,
+        specialty: session.participant.specialty ?? undefined,
+      });
+    }
   }
 
   @OnWorkerEvent('failed')
