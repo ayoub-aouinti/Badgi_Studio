@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AI_PROVIDER, AiProvider } from '../ai/ai-provider.interface';
 import { STORAGE_DRIVER, StorageService } from '../storage/storage.interface';
 import { FrameService } from '../frame/frame.service';
+import { SketchService } from '../sketch/sketch.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PORTRAIT_GENERATION_QUEUE } from '../queue/queue.module';
 
@@ -24,6 +25,7 @@ export class PortraitGenerationProcessor extends WorkerHost {
     @Inject(AI_PROVIDER) private readonly aiProvider: AiProvider,
     @Inject(STORAGE_DRIVER) private readonly storage: StorageService,
     private readonly frameService: FrameService,
+    private readonly sketchService: SketchService,
     private readonly realtime: RealtimeGateway,
   ) {
     super();
@@ -61,14 +63,26 @@ export class PortraitGenerationProcessor extends WorkerHost {
     const resultKey = `portraits/${session.id}/${randomUUID()}-result.jpg`;
     await this.storage.put(resultKey, generated, 'image/jpeg');
 
-    const framed = await this.frameService.apply(generated, {
-      participantName: `${session.participant.firstName} ${session.participant.lastName}`,
-      eventName: event.name,
-      sponsorName: studioConfig?.sponsorName ?? undefined,
-    });
+    const [framed, sketchSvg] = await Promise.all([
+      this.frameService.apply(generated, {
+        participantName: `${session.participant.firstName} ${session.participant.lastName}`,
+        eventName: event.name,
+        sponsorName: studioConfig?.sponsorName ?? undefined,
+      }),
+      // Traced from the raw selfie, not the AI-styled `generated` image: the mock provider
+      // already applies its own vignette/median/tint per style, and stacking our sketch
+      // vignette on top of that washed out the face entirely in testing.
+      this.sketchService.traceToSvg(selfieBuffer),
+    ]);
     this.emitProgress(portrait.id, session.id, 'frame');
     const framedKey = `portraits/${session.id}/${randomUUID()}-framed.jpg`;
     await this.storage.put(framedKey, framed, 'image/jpeg');
+
+    let sketchKey: string | undefined;
+    if (sketchSvg) {
+      sketchKey = `portraits/${session.id}/${randomUUID()}-sketch.svg`;
+      await this.storage.put(sketchKey, Buffer.from(sketchSvg), 'image/svg+xml');
+    }
 
     // The wall is opt-in (docs/SPEC.md: 3 separate consents — ai_processing/wall/sponsor).
     // Look up the participant's latest WALL consent rather than assuming it was granted.
@@ -80,12 +94,13 @@ export class PortraitGenerationProcessor extends WorkerHost {
 
     await this.prisma.portrait.update({
       where: { id: portrait.id },
-      data: { status: 'READY', resultKey, framedKey, onWall },
+      data: { status: 'READY', resultKey, framedKey, sketchKey, onWall },
     });
 
-    const [resultUrl, framedUrl] = await Promise.all([
+    const [resultUrl, framedUrl, sketchUrl] = await Promise.all([
       this.storage.getUrl(resultKey),
       this.storage.getUrl(framedKey),
+      sketchKey ? this.storage.getUrl(sketchKey) : Promise.resolve(undefined),
     ]);
 
     this.realtime.emitPortraitReady({
@@ -94,12 +109,14 @@ export class PortraitGenerationProcessor extends WorkerHost {
       publicCode: portrait.publicCode,
       resultUrl,
       framedUrl,
+      sketchUrl,
     });
 
     if (onWall) {
       this.realtime.emitWallNew({
         portraitId: portrait.id,
         framedUrl,
+        sketchUrl,
         participantName: session.participant.firstName,
         specialty: session.participant.specialty ?? undefined,
       });

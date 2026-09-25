@@ -11,6 +11,7 @@ interface PortraitResult {
   publicCode: string;
   resultUrl: string;
   framedUrl: string;
+  sketchUrl?: string;
 }
 
 interface KioskState {

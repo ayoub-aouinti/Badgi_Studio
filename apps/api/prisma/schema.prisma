@@ -185,6 +185,7 @@ model Portrait {
   selfieKey         String         @map("selfie_key")
   resultKey         String?        @map("result_key")
   framedKey         String?        @map("framed_key")
+  sketchKey         String?        @map("sketch_key")
   status            PortraitStatus @default(QUEUED)
   providerRequestId String?        @map("provider_request_id")
   costUsd           Decimal?       @map("cost_usd") @db.Decimal(10, 4)

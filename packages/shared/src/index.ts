@@ -63,6 +63,10 @@ export interface PortraitReadyEvent {
   publicCode: string;
   resultUrl: string;
   framedUrl: string;
+  // Traced line-art SVG of the portrait, for a "drawing" reveal before showing the color
+  // photo (docs/SCREENS.md écran 6b). Undefined if tracing failed — callers fall back to
+  // showing the color image directly.
+  sketchUrl?: string;
 }
 
 // Kiosk API request/response shapes (apps/kiosk <-> apps/api, see docs/SPEC.md §API).
@@ -110,6 +114,7 @@ export interface CreatePortraitResponse {
 export interface WallFeedPortraitDto {
   portraitId: string;
   framedUrl: string;
+  sketchUrl?: string;
   participantName: string;
   specialty?: string;
   createdAt: string;
@@ -126,6 +131,7 @@ export interface WallFeedResponse {
 export interface WallNewEvent {
   portraitId: string;
   framedUrl: string;
+  sketchUrl?: string;
   participantName: string;
   specialty?: string;
 }

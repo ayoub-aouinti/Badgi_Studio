@@ -40,6 +40,7 @@ export class WallService {
       recent.map(async (portrait) => ({
         portraitId: portrait.id,
         framedUrl: await this.storage.getUrl(portrait.framedKey!),
+        sketchUrl: portrait.sketchKey ? await this.storage.getUrl(portrait.sketchKey) : undefined,
         participantName: portrait.session.participant.firstName,
         specialty: portrait.session.participant.specialty ?? undefined,
         createdAt: portrait.createdAt.toISOString(),

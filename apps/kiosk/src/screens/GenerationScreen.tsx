@@ -7,9 +7,11 @@ import { joinSessionRoom, onEvent } from '../lib/socket';
 import { useKiosk } from '../state/kiosk-context';
 import { ProgressSteps } from '../components/ProgressSteps';
 import { SponsorBadge } from '../components/SponsorBadge';
+import { DrawnPortrait } from '../components/DrawnPortrait';
 
 const STEP_ORDER: PortraitProgressStep[] = ['sketch', 'ink', 'color', 'frame'];
 const GENERATION_TIMEOUT_MS = 45000;
+const DRAW_DURATION_MS = 3200;
 
 export function GenerationScreen() {
   const { t } = useTranslation();
@@ -38,9 +40,15 @@ export function GenerationScreen() {
       clearTimeout(timeoutRef.current);
       dispatch({
         type: 'SET_PORTRAIT_RESULT',
-        result: { publicCode: event.publicCode, resultUrl: event.resultUrl, framedUrl: event.framedUrl },
+        result: {
+          publicCode: event.publicCode,
+          resultUrl: event.resultUrl,
+          framedUrl: event.framedUrl,
+          sketchUrl: event.sketchUrl,
+        },
       });
-      setTimeout(() => navigate('/result'), 1200);
+      // Let the drawing animation play out before moving on to the result screen.
+      setTimeout(() => navigate('/result'), DRAW_DURATION_MS + 800);
     });
 
     return () => {
@@ -55,10 +63,6 @@ export function GenerationScreen() {
 
   const steps = STEP_ORDER.map((key) => ({ key, label: t(`generation.step${capitalize(key)}`) ?? key }));
   const isLive = activeIndex >= 0;
-  // MVP reveal (docs/SPEC.md): contour/grayscale filter fading into color as steps progress,
-  // rather than a real trait-par-trait vector redraw.
-  const revealProgress = Math.max(activeIndex, 0) / steps.length;
-  const filter = `grayscale(${1 - revealProgress}) contrast(${1 + (1 - revealProgress) * 0.4})`;
 
   if (timedOut) {
     return (
@@ -86,13 +90,18 @@ export function GenerationScreen() {
             {t('generation.live')}
           </span>
         )}
-        {state.selfiePreviewUrl && (
-          <img
-            src={state.portraitResult?.framedUrl ?? state.selfiePreviewUrl}
+        {state.portraitResult ? (
+          <DrawnPortrait
+            sketchUrl={state.portraitResult.sketchUrl}
+            colorUrl={state.portraitResult.framedUrl}
             alt=""
-            className="aspect-square w-full object-cover transition-[filter] duration-700"
-            style={{ filter: state.portraitResult ? 'none' : filter }}
+            durationMs={DRAW_DURATION_MS}
+            className="aspect-square w-full"
           />
+        ) : (
+          state.selfiePreviewUrl && (
+            <img src={state.selfiePreviewUrl} alt="" className="aspect-square w-full object-cover" />
+          )
         )}
       </div>
 
