@@ -14,6 +14,9 @@ build/
 # local storage / uploads (STORAGE_DRIVER=local)
 storage/
 
+# downloaded ML models (pnpm --filter @badgi-studio/api models:download)
+apps/api/models/
+
 # docker volumes mounted locally (if any)
 .docker-data/
 

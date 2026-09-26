@@ -14,7 +14,8 @@ export function FeaturedPortrait({ portrait }: { portrait: WallFeedPortraitDto }
       <div className="overflow-hidden rounded-[28px] border-4 border-teal-vivid shadow-2xl">
         <DrawnPortrait
           sketchUrl={portrait.sketchUrl}
-          colorUrl={portrait.framedUrl}
+          colorUrl={portrait.resultUrl}
+          finalUrl={portrait.framedUrl}
           alt={portrait.participantName}
           className="aspect-square w-full"
         />

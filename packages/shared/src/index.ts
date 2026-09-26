@@ -114,6 +114,8 @@ export interface CreatePortraitResponse {
 export interface WallFeedPortraitDto {
   portraitId: string;
   framedUrl: string;
+  // Unframed AI result, painted in with brush strokes after the ink pass.
+  resultUrl?: string;
   sketchUrl?: string;
   participantName: string;
   specialty?: string;
@@ -131,6 +133,7 @@ export interface WallFeedResponse {
 export interface WallNewEvent {
   portraitId: string;
   framedUrl: string;
+  resultUrl?: string;
   sketchUrl?: string;
   participantName: string;
   specialty?: string;

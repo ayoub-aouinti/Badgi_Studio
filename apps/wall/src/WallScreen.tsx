@@ -35,6 +35,8 @@ export function WallScreen() {
           {
             portraitId: event.portraitId,
             framedUrl: event.framedUrl,
+            resultUrl: event.resultUrl,
+            sketchUrl: event.sketchUrl,
             participantName: event.participantName,
             specialty: event.specialty,
             createdAt: new Date().toISOString(),

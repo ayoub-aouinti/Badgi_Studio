@@ -9,9 +9,16 @@ const TRACE_SIZE = 480;
 // pass on a real photo is numerically unstable (a near step-function between "all black"
 // and "all white" a few threshold units apart) and traces flat silhouettes, not usable
 // line art. The dodge technique produces genuine pencil-like shading that potrace can
-// binarize cleanly. A radial vignette then fades the (usually busy) background toward
-// white before tracing, since we have no face-segmentation model to isolate the subject —
-// the kiosk capture oval keeps the face roughly centered, which is all this needs.
+// binarize cleanly.
+//
+// Normally the image is already isolated (BackgroundRemovalService: person on a plain
+// background), so we trace with a sensitive threshold to keep collar/shoulders. If isolation
+// was unavailable, a radial vignette fades the (usually busy) background toward white and a
+// stricter threshold keeps the trace from being dominated by it — the kiosk capture oval
+// keeps the face roughly centered, which is all that fallback needs.
+const ISOLATED = { threshold: 235, turdSize: 12, vignette: false };
+const FALLBACK = { threshold: 215, turdSize: 15, vignette: true };
+
 const VIGNETTE_SVG = `
   <svg width="${TRACE_SIZE}" height="${TRACE_SIZE}" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -28,7 +35,8 @@ const VIGNETTE_SVG = `
 export class SketchService {
   private readonly logger = new Logger(SketchService.name);
 
-  async traceToSvg(image: Buffer): Promise<string | null> {
+  async traceToSvg(image: Buffer, options: { isolated: boolean }): Promise<string | null> {
+    const settings = options.isolated ? ISOLATED : FALLBACK;
     try {
       const [gray, blurredInverted] = await Promise.all([
         sharp(image).resize(TRACE_SIZE, TRACE_SIZE, { fit: 'cover' }).greyscale().toBuffer(),
@@ -48,29 +56,59 @@ export class SketchService {
         .composite([{ input: blurredInverted, blend: 'colour-dodge' }])
         .toBuffer();
 
-      const pencil = await sharp(dodged)
-        .composite([{ input: Buffer.from(VIGNETTE_SVG) }])
-        .png()
-        .toBuffer();
+      const pencil = settings.vignette
+        ? await sharp(dodged).composite([{ input: Buffer.from(VIGNETTE_SVG) }]).png().toBuffer()
+        : await sharp(dodged).png().toBuffer();
 
       const raw = await new Promise<string>((resolve, reject) => {
         trace(
           pencil,
-          { threshold: 215, color: 'black', background: 'transparent', turdSize: 15, blackOnWhite: true },
+          {
+            threshold: settings.threshold,
+            color: 'black',
+            background: 'transparent',
+            turdSize: settings.turdSize,
+            blackOnWhite: true,
+          },
           (err, svg) => (err ? reject(err) : resolve(svg)),
         );
       });
 
-      // potrace emits filled silhouettes ( stroke="none" fill="black" ); turn them into open
-      // strokes so the frontend can animate stroke-dashoffset (a "drawing" reveal instead of
-      // a shape fade-in), and pin a viewBox since we control the traced size exactly.
-      return raw
-        .replace(/<svg[^>]*>/, `<svg viewBox="0 0 ${TRACE_SIZE} ${TRACE_SIZE}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">`)
-        .replace(/stroke="[^"]*"\s*/g, '')
-        .replace(/fill="[^"]*"/g, 'fill="none" stroke="#0E1B2C" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"');
+      return toStrokeSvg(raw, TRACE_SIZE);
     } catch (error) {
       this.logger.warn(`Sketch tracing failed, continuing without it: ${(error as Error).message}`);
       return null;
     }
   }
+}
+
+const ROW_HEIGHT = 32;
+
+// potrace emits one filled silhouette path whose `d` holds every shape as a subpath. Split it
+// into one open-stroke <path> per shape, ordered like an artist inks (row by row, top to
+// bottom, alternating direction so the pen doesn't jump back across the page), so the
+// frontend can draw them one after another with stroke-dashoffset.
+export function toStrokeSvg(raw: string, size: number): string {
+  const subpaths = [...raw.matchAll(/\sd="([^"]+)"/g)]
+    .flatMap((match) => match[1].split(/(?=M\s*-?\d)/))
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .map((d) => {
+      const start = d.match(/^M\s*(-?[\d.]+)[\s,]+(-?[\d.]+)/);
+      return { d, x: start ? Number(start[1]) : 0, y: start ? Number(start[2]) : 0 };
+    })
+    .sort((a, b) => {
+      const rowA = Math.floor(a.y / ROW_HEIGHT);
+      const rowB = Math.floor(b.y / ROW_HEIGHT);
+      if (rowA !== rowB) return rowA - rowB;
+      return rowA % 2 === 0 ? a.x - b.x : b.x - a.x;
+    });
+
+  const paths = subpaths.map((s) => `<path d="${s.d}"/>`).join('');
+  return (
+    `<svg viewBox="0 0 ${size} ${size}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">` +
+    `<g fill="none" stroke="#0E1B2C" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">` +
+    paths +
+    `</g></svg>`
+  );
 }

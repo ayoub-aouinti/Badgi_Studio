@@ -7,11 +7,14 @@ import { joinSessionRoom, onEvent } from '../lib/socket';
 import { useKiosk } from '../state/kiosk-context';
 import { ProgressSteps } from '../components/ProgressSteps';
 import { SponsorBadge } from '../components/SponsorBadge';
-import { DrawnPortrait } from '../components/DrawnPortrait';
+import { DrawnPortrait, type DrawPhase } from '../components/DrawnPortrait';
 
 const STEP_ORDER: PortraitProgressStep[] = ['sketch', 'ink', 'color', 'frame'];
 const GENERATION_TIMEOUT_MS = 45000;
-const DRAW_DURATION_MS = 3200;
+const RESULT_DELAY_MS = 1500;
+// The visible steps follow the drawing performance, not the server steps (which, with the
+// mock provider, all fire within a second, before there is anything to show).
+const PHASE_STEP: Record<DrawPhase, number> = { loading: 0, ink: 1, color: 2, frame: 3, done: 4 };
 
 export function GenerationScreen() {
   const { t } = useTranslation();
@@ -20,6 +23,17 @@ export function GenerationScreen() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [timedOut, setTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const resultTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => () => clearTimeout(resultTimerRef.current), []);
+
+  function handlePhase(phase: DrawPhase) {
+    setActiveIndex(PHASE_STEP[phase]);
+    if (phase === 'done') {
+      clearTimeout(resultTimerRef.current);
+      resultTimerRef.current = setTimeout(() => navigate('/result'), RESULT_DELAY_MS);
+    }
+  }
 
   useEffect(() => {
     if (!state.sessionId || !state.portraitId) {
@@ -32,7 +46,7 @@ export function GenerationScreen() {
 
     const offProgress = onEvent<PortraitProgressEvent>(WS_EVENTS.PORTRAIT_PROGRESS, (event) => {
       if (event.portraitId !== state.portraitId) return;
-      setActiveIndex(STEP_ORDER.indexOf(event.step));
+      setActiveIndex((current) => Math.max(current, 0));
     });
 
     const offReady = onEvent<PortraitReadyEvent>(WS_EVENTS.PORTRAIT_READY, (event) => {
@@ -47,8 +61,7 @@ export function GenerationScreen() {
           sketchUrl: event.sketchUrl,
         },
       });
-      // Let the drawing animation play out before moving on to the result screen.
-      setTimeout(() => navigate('/result'), DRAW_DURATION_MS + 800);
+      // Navigation to /result happens once the drawing performance finishes (handlePhase).
     });
 
     return () => {
@@ -93,10 +106,11 @@ export function GenerationScreen() {
         {state.portraitResult ? (
           <DrawnPortrait
             sketchUrl={state.portraitResult.sketchUrl}
-            colorUrl={state.portraitResult.framedUrl}
+            colorUrl={state.portraitResult.resultUrl}
+            finalUrl={state.portraitResult.framedUrl}
             alt=""
-            durationMs={DRAW_DURATION_MS}
             className="aspect-square w-full"
+            onPhaseChange={handlePhase}
           />
         ) : (
           state.selfiePreviewUrl && (
@@ -109,7 +123,7 @@ export function GenerationScreen() {
         {isLive ? t('generation.liveTitle') : t('generation.title')}
       </h1>
 
-      <ProgressSteps steps={steps} activeIndex={state.portraitResult ? steps.length : activeIndex} />
+      <ProgressSteps steps={steps} activeIndex={activeIndex} />
 
       <div className="mt-auto w-full">
         <SponsorBadge sponsorName={state.config?.sponsorName} sponsorLogoUrl={state.config?.sponsorLogoUrl} dark />

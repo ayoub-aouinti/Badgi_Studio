@@ -8,6 +8,7 @@ import { AI_PROVIDER, AiProvider } from '../ai/ai-provider.interface';
 import { STORAGE_DRIVER, StorageService } from '../storage/storage.interface';
 import { FrameService } from '../frame/frame.service';
 import { SketchService } from '../sketch/sketch.service';
+import { BackgroundRemovalService } from '../segmentation/background-removal.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PORTRAIT_GENERATION_QUEUE } from '../queue/queue.module';
 
@@ -26,6 +27,7 @@ export class PortraitGenerationProcessor extends WorkerHost {
     @Inject(STORAGE_DRIVER) private readonly storage: StorageService,
     private readonly frameService: FrameService,
     private readonly sketchService: SketchService,
+    private readonly backgroundRemoval: BackgroundRemovalService,
     private readonly realtime: RealtimeGateway,
   ) {
     super();
@@ -57,7 +59,10 @@ export class PortraitGenerationProcessor extends WorkerHost {
     this.emitProgress(portrait.id, session.id, 'ink');
 
     const selfieBuffer = await this.storage.get(portrait.selfieKey);
-    const generated = await this.aiProvider.generate(selfieBuffer, portrait.style);
+    // Person on a plain background: both the styling and the traced line art should be
+    // about the participant, not whatever was behind them at the venue.
+    const subject = await this.backgroundRemoval.removeBackground(selfieBuffer);
+    const generated = await this.aiProvider.generate(subject.image, portrait.style);
 
     this.emitProgress(portrait.id, session.id, 'color');
     const resultKey = `portraits/${session.id}/${randomUUID()}-result.jpg`;
@@ -69,10 +74,11 @@ export class PortraitGenerationProcessor extends WorkerHost {
         eventName: event.name,
         sponsorName: studioConfig?.sponsorName ?? undefined,
       }),
-      // Traced from the raw selfie, not the AI-styled `generated` image: the mock provider
-      // already applies its own vignette/median/tint per style, and stacking our sketch
-      // vignette on top of that washed out the face entirely in testing.
-      this.sketchService.traceToSvg(selfieBuffer),
+      // Traced from the cutout, not the AI-styled `generated` image: the mock provider
+      // applies its own vignette/median/tint per style, and stacking our sketch vignette on
+      // top of that washed out the face in testing. Same crop as `generated` (both a
+      // centered square "cover" of the same image), so the color pass lines up.
+      this.sketchService.traceToSvg(subject.image, { isolated: subject.isolated }),
     ]);
     this.emitProgress(portrait.id, session.id, 'frame');
     const framedKey = `portraits/${session.id}/${randomUUID()}-framed.jpg`;
@@ -116,6 +122,7 @@ export class PortraitGenerationProcessor extends WorkerHost {
       this.realtime.emitWallNew({
         portraitId: portrait.id,
         framedUrl,
+        resultUrl,
         sketchUrl,
         participantName: session.participant.firstName,
         specialty: session.participant.specialty ?? undefined,
