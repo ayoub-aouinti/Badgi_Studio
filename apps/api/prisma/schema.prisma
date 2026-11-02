@@ -42,6 +42,8 @@ model StudioConfig {
   showName      Boolean @default(true) @map("show_name")
   showLogo      Boolean @default(true) @map("show_logo")
   retentionDays Int     @default(30) @map("retention_days")
+  // Every portrait waits for the organiser's approval before reaching the wall.
+  preModeration Boolean @default(false) @map("pre_moderation")
   wallToken     String  @unique @map("wall_token")
 
   event  Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -92,12 +94,12 @@ model Kiosk {
 }
 
 model StudioParticipant {
-  id           String  @id @default(uuid())
-  eventId      String  @map("event_id")
-  firstName    String  @map("first_name")
-  lastName     String  @map("last_name")
+  id           String   @id @default(uuid())
+  eventId      String   @map("event_id")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
   email        String?
-  whatsappE164 String? @map("whatsapp_e164")
+  whatsappE164 String?  @map("whatsapp_e164")
   createdAt    DateTime @default(now()) @map("created_at")
 
   event           Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -159,30 +161,43 @@ enum PortraitStatus {
   FAILED
 }
 
+// Wall moderation, separate from `status`: a rejected portrait (manual) is still delivered to
+// the participant; an automatically rejected selfie is never generated (status REJECTED).
+enum ModerationStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Portrait {
-  id                String         @id @default(uuid())
-  sessionId         String         @map("session_id")
-  styleId           String         @map("style_id")
+  id                String           @id @default(uuid())
+  sessionId         String           @map("session_id")
+  styleId           String           @map("style_id")
   // Image keys are cleared by the purge job (docs/SPEC.md: files deleted at J+retention).
-  selfieKey         String?        @map("selfie_key")
-  resultKey         String?        @map("result_key")
-  framedKey         String?        @map("framed_key")
-  sketchKey         String?        @map("sketch_key")
-  status            PortraitStatus @default(QUEUED)
-  providerRequestId String?        @map("provider_request_id")
-  costUsd           Decimal?       @map("cost_usd") @db.Decimal(10, 4)
-  onWall            Boolean        @default(false) @map("on_wall")
-  pinned            Boolean        @default(false)
-  publicCode        String         @unique @map("public_code")
-  createdAt         DateTime       @default(now()) @map("created_at")
-  purgeAt           DateTime       @map("purge_at")
-  purgedAt          DateTime?      @map("purged_at")
+  selfieKey         String?          @map("selfie_key")
+  resultKey         String?          @map("result_key")
+  framedKey         String?          @map("framed_key")
+  sketchKey         String?          @map("sketch_key")
+  status            PortraitStatus   @default(QUEUED)
+  providerRequestId String?          @map("provider_request_id")
+  costUsd           Decimal?         @map("cost_usd") @db.Decimal(10, 4)
+  onWall            Boolean          @default(false) @map("on_wall")
+  pinned            Boolean          @default(false)
+  moderation        ModerationStatus @default(NOT_REQUIRED)
+  moderationReason  String?          @map("moderation_reason")
+  moderatedAt       DateTime?        @map("moderated_at")
+  publicCode        String           @unique @map("public_code")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  purgeAt           DateTime         @map("purge_at")
+  purgedAt          DateTime?        @map("purged_at")
 
   session    CaptureSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   style      StudioStyle    @relation(fields: [styleId], references: [id])
   deliveries Delivery[]
 
   @@index([status])
+  @@index([moderation])
   @@index([purgeAt])
   @@index([sessionId])
   @@map("portraits")

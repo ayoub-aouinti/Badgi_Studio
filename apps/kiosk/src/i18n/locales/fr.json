@@ -50,7 +50,10 @@
     "stepInk": "Encrage",
     "stepColor": "Couleurs",
     "stepFrame": "Cadre du congrès",
-    "timeoutError": "La génération prend plus de temps que prévu."
+    "timeoutError": "La génération prend plus de temps que prévu.",
+    "rejectedTitle": "Cette photo n'a pas pu être utilisée",
+    "rejectedHint": "Merci de reprendre une photo de votre visage, bien cadré.",
+    "retake": "Reprendre ma photo"
   },
   "result": {
     "title": "Voilà, {{firstName}} !",

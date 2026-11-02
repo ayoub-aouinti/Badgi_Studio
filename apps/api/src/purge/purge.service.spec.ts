@@ -13,6 +13,7 @@ function duePortrait(overrides: Record<string, unknown> = {}) {
     framedKey: 'portraits/s1/a-framed.jpg',
     sketchKey: 'portraits/s1/a-sketch.svg',
     onWall: true,
+    session: { kiosk: { eventId: 'event-1' } },
     ...overrides,
   };
 }
@@ -77,7 +78,7 @@ describe('PurgeService', () => {
       where: { portraitId: 'portrait-1' },
       data: { recipient: '' },
     });
-    expect(realtime.emitWallRemove).toHaveBeenCalledWith({ portraitId: 'portrait-1' });
+    expect(realtime.emitWallRemove).toHaveBeenCalledWith('event-1', { portraitId: 'portrait-1' });
   });
 
   it('does not notify the wall for a portrait that was not on it, and skips missing keys', async () => {

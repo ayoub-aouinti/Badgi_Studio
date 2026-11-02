@@ -6,6 +6,8 @@
 // AI_PROVIDER=animegan — confirm the weights' licence before commercial use.
 // version-RFB-320: Ultra-Light-Fast-Generic-Face-Detector-1MB (Linzaer, MIT), ONNX export from
 // the ONNX Model Zoo. Locates the face for the local caricature warp (bigger head and eyes).
+// nsfw-vit-quantized: Falconsai/nsfw_image_detection (ViT, Apache-2.0), int8 ONNX export by
+// onnx-community. Automatic moderation of selfies (MODERATION_DRIVER=local), ~87 MB.
 import { createWriteStream, existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +29,10 @@ const MODELS = [
   {
     file: 'ultraface-rfb-320.onnx',
     url: 'https://github.com/onnx/models/raw/main/validated/vision/body_analysis/ultraface/models/version-RFB-320.onnx',
+  },
+  {
+    file: 'nsfw-vit-quantized.onnx',
+    url: 'https://huggingface.co/onnx-community/nsfw_image_detection-ONNX/resolve/main/onnx/model_quantized.onnx',
   },
 ];
 

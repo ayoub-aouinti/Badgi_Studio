@@ -30,6 +30,7 @@ export class PurgeService {
         where: { purgedAt: null, purgeAt: { lte: now } },
         orderBy: { purgeAt: 'asc' },
         take: BATCH_SIZE,
+        include: { session: { select: { kiosk: { select: { eventId: true } } } } },
       });
       for (const portrait of due) {
         await this.purgePortrait(portrait, now);
@@ -45,7 +46,7 @@ export class PurgeService {
     return { portraits, participants };
   }
 
-  private async purgePortrait(portrait: Portrait, now: Date) {
+  private async purgePortrait(portrait: Portrait & { session: { kiosk: { eventId: string } } }, now: Date) {
     const keys = [portrait.selfieKey, portrait.resultKey, portrait.framedKey, portrait.sketchKey];
     // Files first: if a delete fails the portrait stays due and the next run retries it.
     for (const key of keys) {
@@ -68,7 +69,7 @@ export class PurgeService {
       this.prisma.delivery.updateMany({ where: { portraitId: portrait.id }, data: { recipient: '' } }),
     ]);
 
-    if (portrait.onWall) this.realtime.emitWallRemove({ portraitId: portrait.id });
+    if (portrait.onWall) this.realtime.emitWallRemove(portrait.session.kiosk.eventId, { portraitId: portrait.id });
   }
 
   // A participant's email/WhatsApp is cleared once none of their portraits is still kept

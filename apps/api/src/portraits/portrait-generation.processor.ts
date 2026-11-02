@@ -12,6 +12,7 @@ import { SketchService } from '../sketch/sketch.service';
 import { BackgroundRemovalService } from '../segmentation/background-removal.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { DeliveriesService } from '../deliveries/deliveries.service';
+import { CONTENT_MODERATOR, ContentModerator } from '../moderation/content-moderator.interface';
 import { PORTRAIT_GENERATION_QUEUE } from '../queue/queue.module';
 
 interface GenerateJobData {
@@ -33,6 +34,7 @@ export class PortraitGenerationProcessor extends WorkerHost {
     private readonly backgroundRemoval: BackgroundRemovalService,
     private readonly realtime: RealtimeGateway,
     private readonly deliveries: DeliveriesService,
+    @Inject(CONTENT_MODERATOR) private readonly moderator: ContentModerator,
   ) {
     super();
   }
@@ -54,17 +56,28 @@ export class PortraitGenerationProcessor extends WorkerHost {
     const { session } = portrait;
     const event = session.kiosk.event;
 
-    await this.setStatus(portrait.id, 'MODERATING');
-    this.emitProgress(portrait.id, session.id, 'sketch');
-    // AI_PROVIDER=mock: no real face/content detector, always accepted (docs/SPEC.md).
-
-    await this.setStatus(portrait.id, 'GENERATING');
-    this.emitProgress(portrait.id, session.id, 'ink');
-
     if (!portrait.selfieKey) {
       throw new Error(`Portrait ${portrait.id} has no selfie (purged)`);
     }
     const selfieBuffer = await this.storage.get(portrait.selfieKey);
+
+    await this.setStatus(portrait.id, 'MODERATING');
+    this.emitProgress(portrait.id, session.id, 'sketch');
+    // Refused selfies are never sent to the AI provider nor shown anywhere; the kiosk asks
+    // the participant to retake the photo.
+    const verdict = await this.moderator.check(selfieBuffer);
+    if (verdict.flagged) {
+      await this.prisma.portrait.update({
+        where: { id: portrait.id },
+        data: { status: 'REJECTED', moderation: 'REJECTED', moderationReason: verdict.reason, moderatedAt: new Date() },
+      });
+      this.realtime.emitPortraitRejected({ portraitId: portrait.id, sessionId: session.id });
+      return;
+    }
+
+    await this.setStatus(portrait.id, 'GENERATING');
+    this.emitProgress(portrait.id, session.id, 'ink');
+
     // Person on a plain background: both the styling and the traced line art should be
     // about the participant, not whatever was behind them at the venue.
     const subject = await this.backgroundRemoval.removeBackground(selfieBuffer);
@@ -110,7 +123,10 @@ export class PortraitGenerationProcessor extends WorkerHost {
       where: { participantId: session.participantId, type: 'WALL' },
       orderBy: { grantedAt: 'desc' },
     });
-    const onWall = wallConsent?.granted ?? false;
+    // With pre-moderation, a consenting participant's portrait waits for the organiser.
+    const wallWanted = wallConsent?.granted ?? false;
+    const preModeration = event.studioConfig?.preModeration ?? false;
+    const onWall = wallWanted && !preModeration;
 
     await this.prisma.portrait.update({
       where: { id: portrait.id },
@@ -120,6 +136,7 @@ export class PortraitGenerationProcessor extends WorkerHost {
         framedKey,
         sketchKey,
         onWall,
+        moderation: wallWanted && preModeration ? 'PENDING' : 'NOT_REQUIRED',
         providerRequestId: generated.providerRequestId,
         costUsd: generated.costUsd,
       },
@@ -141,7 +158,7 @@ export class PortraitGenerationProcessor extends WorkerHost {
     });
 
     if (onWall) {
-      this.realtime.emitWallNew({
+      this.realtime.emitWallNew(event.id, {
         portraitId: portrait.id,
         framedUrl,
         resultUrl,

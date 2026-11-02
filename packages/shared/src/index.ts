@@ -10,6 +10,9 @@ export type PortraitStatus =
 
 export type PortraitProgressStep = 'sketch' | 'ink' | 'color' | 'frame';
 
+// Wall moderation (portraits.moderation), separate from the generation status.
+export type ModerationStatus = 'NOT_REQUIRED' | 'PENDING' | 'APPROVED' | 'REJECTED';
+
 export interface ConsentInput {
   aiProcessing: boolean;
   wall: boolean;
@@ -64,7 +67,14 @@ export const WS_EVENTS = {
   PORTRAIT_READY: 'portrait.ready',
   WALL_NEW: 'wall.new',
   WALL_REMOVE: 'wall.remove',
+  // The selfie was refused by automatic moderation: no portrait is generated.
+  PORTRAIT_REJECTED: 'portrait.rejected',
 } as const;
+
+export interface PortraitRejectedEvent {
+  portraitId: string;
+  sessionId: string;
+}
 
 export interface PortraitProgressEvent {
   portraitId: string;
@@ -156,6 +166,8 @@ export interface AdminPortraitDto {
   pinned: boolean;
   // Only a participant who consented can be (re)shown on the wall.
   wallConsent: boolean;
+  moderation: ModerationStatus;
+  moderationReason?: string;
   createdAt: string;
   purgeAt: string;
   purged: boolean;
@@ -164,4 +176,86 @@ export interface AdminPortraitDto {
 export interface UpdateAdminPortraitRequest {
   onWall?: boolean;
   pinned?: boolean;
+  // Organiser decision for the wall; APPROVED also puts the portrait on the wall.
+  moderation?: 'APPROVED' | 'REJECTED';
+}
+
+export interface AdminStyleDto {
+  id: string;
+  name: string;
+  preset: StylePreset;
+  active: boolean;
+}
+
+export interface AdminEventDto {
+  id: string;
+  name: string;
+  slug: string;
+  startsAt?: string;
+  endsAt?: string;
+  enabled: boolean;
+  retentionDays: number;
+  preModeration: boolean;
+  // Secret in the wall screen URL (apps/wall ?token=...).
+  wallToken: string;
+  portraitCount: number;
+  pendingCount: number;
+  kioskCount: number;
+}
+
+export interface CreateEventRequest {
+  name: string;
+  startsAt?: string;
+  endsAt?: string;
+}
+
+export interface UpdateEventRequest {
+  name?: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  enabled?: boolean;
+  retentionDays?: number;
+  preModeration?: boolean;
+}
+
+export interface AdminKioskDto {
+  id: string;
+  name: string;
+  // Shown until a tablet is paired with it (the kiosk app's pairing screen).
+  pairingCode?: string;
+  paired: boolean;
+  online: boolean;
+  lastSeenAt?: string;
+}
+
+export interface CreateKioskRequest {
+  name: string;
+}
+
+export interface AdminParticipantDto {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  whatsappE164?: string;
+  createdAt: string;
+  portraitCount: number;
+  wallConsent: boolean;
+}
+
+export interface EventStatsDto {
+  participants: number;
+  portraitsReady: number;
+  portraitsFailed: number;
+  autoRejected: number;
+  pendingModeration: number;
+  onWall: number;
+  emailsSent: number;
+  emailsFailed: number;
+  aiCostUsd: number;
+  kiosksOnline: number;
+  kiosksTotal: number;
+  byStyle: { styleId: string; name: string; preset: StylePreset; count: number }[];
+  // Ready portraits per hour (ISO start of the hour), oldest first.
+  byHour: { hour: string; count: number }[];
 }

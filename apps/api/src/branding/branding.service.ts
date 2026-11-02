@@ -25,13 +25,9 @@ export class BrandingService {
     private readonly frame: FrameService,
   ) {}
 
-  // The app serves a single event: its studio config is the one source of branding.
-  async getActive(): Promise<ConfigWithEvent> {
-    const config = await this.prisma.studioConfig.findFirst({
-      include: { event: true },
-      orderBy: { event: { createdAt: 'asc' } },
-    });
-    if (!config) throw new NotFoundException('Studio is not configured (run the seed)');
+  async getConfig(eventId: string): Promise<ConfigWithEvent> {
+    const config = await this.prisma.studioConfig.findUnique({ where: { eventId }, include: { event: true } });
+    if (!config) throw new NotFoundException('Event not found');
     return config;
   }
 
@@ -50,12 +46,12 @@ export class BrandingService {
     };
   }
 
-  async get(): Promise<BrandingDto> {
-    return this.toDto(await this.getActive());
+  async get(eventId: string): Promise<BrandingDto> {
+    return this.toDto(await this.getConfig(eventId));
   }
 
-  async update(dto: UpdateBrandingDto): Promise<BrandingDto> {
-    const config = await this.getActive();
+  async update(eventId: string, dto: UpdateBrandingDto): Promise<BrandingDto> {
+    const config = await this.getConfig(eventId);
     const { eventName, tagline, ...rest } = dto;
     if (eventName !== undefined) {
       await this.prisma.event.update({ where: { id: config.eventId }, data: { name: eventName } });
@@ -64,11 +60,11 @@ export class BrandingService {
       where: { id: config.id },
       data: { ...rest, ...(tagline !== undefined && { tagline: tagline.trim() || null }) },
     });
-    return this.get();
+    return this.get(eventId);
   }
 
-  async setLogo(file: Buffer): Promise<BrandingDto> {
-    const config = await this.getActive();
+  async setLogo(eventId: string, file: Buffer): Promise<BrandingDto> {
+    const config = await this.getConfig(eventId);
     // Normalised to a bounded PNG so the frame, wall and kiosk all get the same asset.
     const png = await sharp(file)
       .rotate()
@@ -78,13 +74,13 @@ export class BrandingService {
     const key = `branding/logo-${randomUUID()}.png`;
     await this.storage.put(key, png, 'image/png');
     await this.prisma.studioConfig.update({ where: { id: config.id }, data: { logoKey: key } });
-    return this.get();
+    return this.get(eventId);
   }
 
-  async removeLogo(): Promise<BrandingDto> {
-    const config = await this.getActive();
+  async removeLogo(eventId: string): Promise<BrandingDto> {
+    const config = await this.getConfig(eventId);
     await this.prisma.studioConfig.update({ where: { id: config.id }, data: { logoKey: null } });
-    return this.get();
+    return this.get(eventId);
   }
 
   // Frame options for a portrait; the participant name only appears when the admin allows it.
@@ -102,8 +98,8 @@ export class BrandingService {
   }
 
   // Live preview for the admin page: a stand-in portrait framed with the saved branding.
-  async preview(): Promise<Buffer> {
-    const config = await this.getActive();
+  async preview(eventId: string): Promise<Buffer> {
+    const config = await this.getConfig(eventId);
     const sample = await sharp(Buffer.from(SAMPLE_PORTRAIT)).jpeg().toBuffer();
     return this.frame.apply(sample, await this.frameOptions(config, 'Prénom Nom'));
   }

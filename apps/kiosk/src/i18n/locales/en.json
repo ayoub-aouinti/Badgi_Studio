@@ -50,7 +50,10 @@
     "stepInk": "Ink",
     "stepColor": "Color",
     "stepFrame": "Congress frame",
-    "timeoutError": "Generation is taking longer than expected."
+    "timeoutError": "Generation is taking longer than expected.",
+    "rejectedTitle": "This photo could not be used",
+    "rejectedHint": "Please take a new photo of your face, well framed.",
+    "retake": "Retake my photo"
   },
   "result": {
     "title": "Here it is, {{firstName}}!",

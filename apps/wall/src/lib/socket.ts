@@ -1,11 +1,13 @@
 import { io, Socket } from 'socket.io-client';
+import { WALL_TOKEN } from './api';
 
 let socket: Socket | null = null;
 
 function getSocket(): Socket {
   if (!socket) {
     socket = io(import.meta.env.VITE_SOCKET_URL, { autoConnect: true, transports: ['websocket'] });
-    socket.on('connect', () => socket?.emit('wall.join'));
+    // The token selects this event's room: the wall only receives its own portraits.
+    socket.on('connect', () => socket?.emit('wall.join', WALL_TOKEN));
   }
   return socket;
 }

@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { DEFAULT_STYLES } from '../src/events/default-styles';
 
 const prisma = new PrismaClient();
 
@@ -27,48 +28,8 @@ async function main() {
     },
   });
 
-  const styles = [
-    {
-      name: 'Portrait professionnel',
-      preset: 'pro',
-      prompt: 'Turn this selfie into a professional studio headshot: soft flattering light, natural skin retouch, sharp focus.',
-      model: 'mock',
-      sortOrder: 0,
-    },
-    {
-      name: 'Caricature',
-      preset: 'caricature',
-      prompt:
-        'Turn this selfie into a friendly hand-drawn caricature: oversized head on a small body, big expressive eyes, ' +
-        'exaggerated smile and most distinctive features, bold ink outlines, warm watercolour colours. Flattering, never mocking.',
-      model: 'mock',
-      sortOrder: 1,
-    },
-    {
-      name: 'Crayon noir',
-      preset: 'pencil',
-      prompt: 'Turn this selfie into a black graphite pencil portrait on white paper, fine hatching and soft shading.',
-      model: 'mock',
-      sortOrder: 2,
-    },
-    {
-      name: 'Portrait peint',
-      preset: 'painted',
-      prompt: 'Turn this selfie into an oil painting portrait: visible brush strokes, rich warm colours, painterly light.',
-      model: 'mock',
-      sortOrder: 3,
-    },
-    {
-      name: 'Bande dessinée',
-      preset: 'comic',
-      prompt: 'Turn this selfie into a franco-belgian comic book character: clean black ink lines, flat bright colours.',
-      model: 'mock',
-      sortOrder: 4,
-    },
-  ];
-
   // Matched by sort order so re-seeding renames styles left over from earlier versions.
-  for (const style of styles) {
+  for (const style of DEFAULT_STYLES) {
     const existing = await prisma.studioStyle.findFirst({
       where: { configId: studioConfig.id, sortOrder: style.sortOrder },
     });

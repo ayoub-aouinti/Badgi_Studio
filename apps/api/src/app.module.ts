@@ -15,6 +15,7 @@ import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.module';
 import { PublicModule } from './public/public.module';
 import { PurgeModule } from './purge/purge.module';
+import { ModerationModule } from './moderation/moderation.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PurgeModule } from './purge/purge.module';
     MailModule,
     PublicModule,
     PurgeModule,
+    ModerationModule,
   ],
   controllers: [HealthController],
 })

@@ -1,6 +1,20 @@
-import type { AdminPortraitDto, BrandingDto, StylePreset, UpdateAdminPortraitRequest } from '@badgi-studio/shared';
+import type {
+  AdminEventDto,
+  AdminKioskDto,
+  AdminParticipantDto,
+  AdminPortraitDto,
+  AdminStyleDto,
+  BrandingDto,
+  CreateEventRequest,
+  EventStatsDto,
+  ModerationStatus,
+  UpdateAdminPortraitRequest,
+  UpdateEventRequest,
+} from '@badgi-studio/shared';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+// apps/wall base URL: the dashboard builds each event's wall link from it.
+export const WALL_URL = import.meta.env.VITE_WALL_URL ?? 'http://localhost:5273';
 const TOKEN_KEY = 'studio-admin-token';
 
 export type BrandingUpdate = Partial<
@@ -18,17 +32,14 @@ export type BrandingUpdate = Partial<
   >
 >;
 
-export interface AdminStyle {
-  id: string;
-  name: string;
-  preset: StylePreset;
-  active: boolean;
-}
-
 export class UnauthorizedError extends Error {}
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+export function wallLink(event: AdminEventDto): string {
+  return `${WALL_URL.replace(/\/+$/, '')}/?token=${encodeURIComponent(event.wallToken)}`;
+}
 
 async function request(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
@@ -48,6 +59,13 @@ async function request(path: string, init: RequestInit = {}): Promise<Response> 
   return res;
 }
 
+const json = async <T>(path: string, init?: RequestInit): Promise<T> => (await request(path, init)).json();
+const send = (method: string, body?: unknown): RequestInit => ({
+  method,
+  body: body === undefined ? undefined : JSON.stringify(body),
+});
+const ev = (eventId: string) => `/admin/events/${eventId}`;
+
 export const api = {
   async login(password: string) {
     const res = await fetch(`${API_URL}/admin/login`, {
@@ -60,33 +78,46 @@ export const api = {
     localStorage.setItem(TOKEN_KEY, token);
   },
 
-  getBranding: async (): Promise<BrandingDto> => (await request('/admin/branding')).json(),
+  // --- Events ---
+  getEvents: () => json<AdminEventDto[]>('/admin/events'),
+  createEvent: (dto: CreateEventRequest) => json<AdminEventDto>('/admin/events', send('POST', dto)),
+  updateEvent: (eventId: string, dto: UpdateEventRequest) => json<AdminEventDto>(ev(eventId), send('PATCH', dto)),
+  regenerateWallToken: (eventId: string) => json<AdminEventDto>(`${ev(eventId)}/wall-token`, send('POST')),
+  getStats: (eventId: string) => json<EventStatsDto>(`${ev(eventId)}/stats`),
 
-  updateBranding: async (dto: BrandingUpdate): Promise<BrandingDto> =>
-    (await request('/admin/branding', { method: 'PUT', body: JSON.stringify(dto) })).json(),
-
-  uploadLogo: async (file: File): Promise<BrandingDto> => {
+  // --- Branding & styles ---
+  getBranding: (eventId: string) => json<BrandingDto>(`${ev(eventId)}/branding`),
+  updateBranding: (eventId: string, dto: BrandingUpdate) => json<BrandingDto>(`${ev(eventId)}/branding`, send('PUT', dto)),
+  uploadLogo: (eventId: string, file: File) => {
     const form = new FormData();
     form.append('logo', file);
-    return (await request('/admin/branding/logo', { method: 'POST', body: form })).json();
+    return json<BrandingDto>(`${ev(eventId)}/branding/logo`, { method: 'POST', body: form });
   },
-
-  removeLogo: async (): Promise<BrandingDto> =>
-    (await request('/admin/branding/logo', { method: 'DELETE' })).json(),
-
+  removeLogo: (eventId: string) => json<BrandingDto>(`${ev(eventId)}/branding/logo`, send('DELETE')),
   // The preview endpoint needs the auth header, so it is fetched as a blob.
-  previewUrl: async (): Promise<string> => {
-    const blob = await (await request('/admin/branding/preview')).blob();
+  previewUrl: async (eventId: string): Promise<string> => {
+    const blob = await (await request(`${ev(eventId)}/branding/preview`)).blob();
     return URL.createObjectURL(blob);
   },
+  getStyles: (eventId: string) => json<AdminStyleDto[]>(`${ev(eventId)}/styles`),
+  setStyleActive: (eventId: string, id: string, active: boolean) =>
+    json<AdminStyleDto>(`${ev(eventId)}/styles/${id}`, send('PATCH', { active })),
 
-  getStyles: async (): Promise<AdminStyle[]> => (await request('/admin/styles')).json(),
+  // --- Portraits & moderation ---
+  getPortraits: (eventId: string, moderation?: ModerationStatus) =>
+    json<AdminPortraitDto[]>(`${ev(eventId)}/portraits${moderation ? `?moderation=${moderation}` : ''}`),
+  updatePortrait: (eventId: string, id: string, dto: UpdateAdminPortraitRequest) =>
+    json<AdminPortraitDto>(`${ev(eventId)}/portraits/${id}`, send('PATCH', dto)),
 
-  setStyleActive: async (id: string, active: boolean): Promise<AdminStyle> =>
-    (await request(`/admin/styles/${id}`, { method: 'PATCH', body: JSON.stringify({ active }) })).json(),
+  // --- Kiosks ---
+  getKiosks: (eventId: string) => json<AdminKioskDto[]>(`${ev(eventId)}/kiosks`),
+  createKiosk: (eventId: string, name: string) => json<AdminKioskDto>(`${ev(eventId)}/kiosks`, send('POST', { name })),
+  resetKiosk: (eventId: string, id: string) => json<AdminKioskDto>(`${ev(eventId)}/kiosks/${id}/reset`, send('POST')),
+  removeKiosk: async (eventId: string, id: string) => {
+    await request(`${ev(eventId)}/kiosks/${id}`, send('DELETE'));
+  },
 
-  getPortraits: async (): Promise<AdminPortraitDto[]> => (await request('/admin/portraits')).json(),
-
-  updatePortrait: async (id: string, dto: UpdateAdminPortraitRequest): Promise<AdminPortraitDto> =>
-    (await request(`/admin/portraits/${id}`, { method: 'PATCH', body: JSON.stringify(dto) })).json(),
+  // --- Participants ---
+  getParticipants: (eventId: string, q?: string) =>
+    json<AdminParticipantDto[]>(`${ev(eventId)}/participants${q ? `?q=${encodeURIComponent(q)}` : ''}`),
 };

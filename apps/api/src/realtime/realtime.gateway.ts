@@ -10,14 +10,19 @@ import {
   WS_EVENTS,
   PortraitProgressEvent,
   PortraitReadyEvent,
+  PortraitRejectedEvent,
   WallNewEvent,
   WallRemoveEvent,
 } from '@badgi-studio/shared';
-
-const WALL_ROOM = 'wall';
+import { PrismaService } from '../prisma/prisma.service';
 
 function sessionRoom(sessionId: string): string {
   return `session:${sessionId}`;
+}
+
+// One room per event: each congress wall only receives its own portraits.
+function wallRoom(eventId: string): string {
+  return `wall:${eventId}`;
 }
 
 @Injectable()
@@ -25,6 +30,8 @@ function sessionRoom(sessionId: string): string {
 export class RealtimeGateway implements OnGatewayConnection {
   @WebSocketServer()
   server!: Server;
+
+  constructor(private readonly prisma: PrismaService) {}
 
   handleConnection(client: Socket) {
     void client;
@@ -35,9 +42,14 @@ export class RealtimeGateway implements OnGatewayConnection {
     client.join(sessionRoom(sessionId));
   }
 
+  // The wall token (secret in the wall URL) picks the event; an unknown token joins nothing.
   @SubscribeMessage('wall.join')
-  onJoinWall(client: Socket) {
-    client.join(WALL_ROOM);
+  async onJoinWall(client: Socket, token: unknown) {
+    if (typeof token !== 'string' || !token) return { joined: false };
+    const config = await this.prisma.studioConfig.findUnique({ where: { wallToken: token }, select: { eventId: true } });
+    if (!config) return { joined: false };
+    client.join(wallRoom(config.eventId));
+    return { joined: true };
   }
 
   emitPortraitProgress(event: PortraitProgressEvent) {
@@ -48,11 +60,15 @@ export class RealtimeGateway implements OnGatewayConnection {
     this.server.to(sessionRoom(event.sessionId)).emit(WS_EVENTS.PORTRAIT_READY, event);
   }
 
-  emitWallNew(event: WallNewEvent) {
-    this.server.to(WALL_ROOM).emit(WS_EVENTS.WALL_NEW, event);
+  emitPortraitRejected(event: PortraitRejectedEvent) {
+    this.server.to(sessionRoom(event.sessionId)).emit(WS_EVENTS.PORTRAIT_REJECTED, event);
   }
 
-  emitWallRemove(event: WallRemoveEvent) {
-    this.server.to(WALL_ROOM).emit(WS_EVENTS.WALL_REMOVE, event);
+  emitWallNew(eventId: string, event: WallNewEvent) {
+    this.server.to(wallRoom(eventId)).emit(WS_EVENTS.WALL_NEW, event);
+  }
+
+  emitWallRemove(eventId: string, event: WallRemoveEvent) {
+    this.server.to(wallRoom(eventId)).emit(WS_EVENTS.WALL_REMOVE, event);
   }
 }

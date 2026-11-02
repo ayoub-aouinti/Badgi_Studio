@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import type { PortraitProgressEvent, PortraitProgressStep, PortraitReadyEvent } from '@badgi-studio/shared';
+import type {
+  PortraitProgressEvent,
+  PortraitProgressStep,
+  PortraitReadyEvent,
+  PortraitRejectedEvent,
+} from '@badgi-studio/shared';
 import { WS_EVENTS } from '@badgi-studio/shared';
 import { joinSessionRoom, onEvent } from '../lib/socket';
 import { useKiosk } from '../state/kiosk-context';
@@ -21,6 +26,7 @@ export function GenerationScreen() {
   const { state, dispatch } = useKiosk();
   const [activeIndex, setActiveIndex] = useState(-1);
   const [timedOut, setTimedOut] = useState(false);
+  const [rejected, setRejected] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const resultTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -63,10 +69,17 @@ export function GenerationScreen() {
       // Navigation to /result happens once the drawing performance finishes (handlePhase).
     });
 
+    const offRejected = onEvent<PortraitRejectedEvent>(WS_EVENTS.PORTRAIT_REJECTED, (event) => {
+      if (event.portraitId !== state.portraitId) return;
+      clearTimeout(timeoutRef.current);
+      setRejected(true);
+    });
+
     return () => {
       clearTimeout(timeoutRef.current);
       offProgress();
       offReady();
+      offRejected();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.sessionId, state.portraitId]);
@@ -75,6 +88,24 @@ export function GenerationScreen() {
 
   const steps = STEP_ORDER.map((key) => ({ key, label: t(`generation.step${capitalize(key)}`) ?? key }));
   const isLive = activeIndex >= 0;
+
+  if (rejected) {
+    return (
+      <div className="kiosk-shell items-center justify-center gap-4 text-center">
+        <h1 className="text-xl font-bold">{t('generation.rejectedTitle')}</h1>
+        <p className="text-ink-soft">{t('generation.rejectedHint')}</p>
+        <button
+          onClick={() => {
+            dispatch({ type: 'RESTART_FOR_NEW_STYLE' });
+            navigate('/style');
+          }}
+          className="btn-primary mt-4"
+        >
+          {t('generation.retake')}
+        </button>
+      </div>
+    );
+  }
 
   if (timedOut) {
     return (

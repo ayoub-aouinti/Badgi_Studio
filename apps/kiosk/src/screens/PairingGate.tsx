@@ -21,6 +21,9 @@ export function PairingGate({ children }: { children: ReactNode }) {
     queryFn: api.getConfig,
     enabled: hasToken,
     retry: false,
+    // Also the kiosk's heartbeat (dashboard "en ligne") and how branding/style changes made in
+    // the dashboard reach a running kiosk.
+    refetchInterval: 60_000,
   });
 
   useEffect(() => {

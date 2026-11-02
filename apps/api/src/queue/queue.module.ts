@@ -12,6 +12,9 @@ export const MAINTENANCE_QUEUE = 'maintenance';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
+        // Separate key namespace per environment sharing one Redis (the e2e tests use their
+        // own, so a running dev API's workers do not pick up their jobs).
+        prefix: config.get<string>('QUEUE_PREFIX') || 'bull',
         connection: {
           host: config.get<string>('REDIS_HOST') ?? 'localhost',
           port: parseInt(config.get<string>('REDIS_PORT') ?? '6379', 10),
