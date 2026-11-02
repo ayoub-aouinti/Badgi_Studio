@@ -25,14 +25,16 @@
   "style": {
     "title": "Choose your style",
     "descriptionPro": "Clean professional portrait, neutral background",
-    "descriptionCaricature": "Colourful illustrated caricature",
+    "descriptionCaricature": "Illustrated caricature: big head, big eyes",
     "consentTitle": "Consents",
     "consentAi": "I agree to AI processing of my photo (required)",
     "consentWall": "I agree to display my portrait on the congress wall",
     "retentionNote": "Your data is automatically deleted after 30 days.",
     "privacyLink": "Privacy policy",
     "takePhoto": "Take my photo",
-    "descriptionCrayon": "Black pencil drawing on white paper"
+    "descriptionCrayon": "Black pencil drawing on white paper",
+    "descriptionPainted": "Painted portrait in warm colours",
+    "descriptionComic": "Comic book character, flat colours and ink"
   },
   "capture": {
     "instruction": "Place your face in the oval and smile",

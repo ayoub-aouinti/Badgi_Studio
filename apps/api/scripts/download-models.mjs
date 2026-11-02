@@ -4,6 +4,8 @@
 // face_paint_512_v2: AnimeGAN2 "face paint" portrait model from bryandlee/animegan2-pytorch
 // (repo licensed MIT), ONNX export hosted on Hugging Face (akhaliq/AnimeGANv2-ONNX). Used by
 // AI_PROVIDER=animegan — confirm the weights' licence before commercial use.
+// version-RFB-320: Ultra-Light-Fast-Generic-Face-Detector-1MB (Linzaer, MIT), ONNX export from
+// the ONNX Model Zoo. Locates the face for the local caricature warp (bigger head and eyes).
 import { createWriteStream, existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +23,10 @@ const MODELS = [
   {
     file: 'face_paint_512_v2_0.onnx',
     url: 'https://huggingface.co/akhaliq/AnimeGANv2-ONNX/resolve/main/face_paint_512_v2_0.onnx',
+  },
+  {
+    file: 'ultraface-rfb-320.onnx',
+    url: 'https://github.com/onnx/models/raw/main/validated/vision/body_analysis/ultraface/models/version-RFB-320.onnx',
   },
 ];
 

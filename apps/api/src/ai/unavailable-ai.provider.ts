@@ -1,14 +1,13 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { AiProvider, GeneratedPortrait } from './ai-provider.interface';
 
-// Placeholder adapters for the paid providers (CLAUDE.md AI_PROVIDER=fal|gemini), wired later.
+// Selected when AI_PROVIDER is unknown or a paid provider has no API key: every generation
+// fails with the reason (the job is marked FAILED), instead of the API refusing to start.
 @Injectable()
 export class UnavailableAiProvider implements AiProvider {
-  constructor(private readonly providerName: string) {}
+  constructor(private readonly reason: string) {}
 
   async generate(): Promise<GeneratedPortrait> {
-    throw new NotImplementedException(
-      `AI_PROVIDER=${this.providerName} is not implemented yet, use AI_PROVIDER=mock.`,
-    );
+    throw new ServiceUnavailableException(this.reason);
   }
 }

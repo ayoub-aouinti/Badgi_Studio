@@ -54,6 +54,9 @@ model StudioStyle {
   id         String  @id @default(uuid())
   configId   String  @map("config_id")
   name       String
+  // Rendering recipe for the local providers (mock/animegan); paid providers use `prompt`.
+  // pro | caricature | pencil | painted | comic (see StylePreset in @badgi-studio/shared).
+  preset     String  @default("pro")
   prompt     String
   model      String
   previewKey String? @map("preview_key")
@@ -95,6 +98,7 @@ model StudioParticipant {
   lastName     String  @map("last_name")
   email        String?
   whatsappE164 String? @map("whatsapp_e164")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   event           Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
   consents        Consent[]
@@ -159,7 +163,8 @@ model Portrait {
   id                String         @id @default(uuid())
   sessionId         String         @map("session_id")
   styleId           String         @map("style_id")
-  selfieKey         String         @map("selfie_key")
+  // Image keys are cleared by the purge job (docs/SPEC.md: files deleted at J+retention).
+  selfieKey         String?        @map("selfie_key")
   resultKey         String?        @map("result_key")
   framedKey         String?        @map("framed_key")
   sketchKey         String?        @map("sketch_key")
@@ -171,6 +176,7 @@ model Portrait {
   publicCode        String         @unique @map("public_code")
   createdAt         DateTime       @default(now()) @map("created_at")
   purgeAt           DateTime       @map("purge_at")
+  purgedAt          DateTime?      @map("purged_at")
 
   session    CaptureSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   style      StudioStyle    @relation(fields: [styleId], references: [id])

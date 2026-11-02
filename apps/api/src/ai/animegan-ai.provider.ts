@@ -4,7 +4,8 @@ import { existsSync } from 'fs';
 import sharp from 'sharp';
 import type { InferenceSession } from 'onnxruntime-node';
 import { AiProvider, GeneratedPortrait } from './ai-provider.interface';
-import { MockAiProvider } from './mock-ai.provider';
+import { MockAiProvider, stylePreset } from './mock-ai.provider';
+import { CaricatureWarper } from './caricature-warp';
 
 const MODEL_SIZE = 512;
 const OUTPUT_SIZE = 1024;
@@ -13,8 +14,10 @@ const OUTPUT_SIZE = 1024;
 // photo's lightness is restored (see restoreLuminance): the face-paint model darkens tanned
 // skin and beards heavily (tested on real kiosk selfies), which makes participants
 // unrecognisable; restoring lightness keeps the painted texture but the real skin tone.
+// "painted" keeps more of the model's own paint (less lightness restored, softer contrast).
 const FINISH = {
   caricature: { luminance: 0.6, saturation: 1.3, brightness: 1.0, contrast: 1.12 },
+  painted: { luminance: 0.45, saturation: 1.15, brightness: 1.02, contrast: 1.05 },
 };
 
 // Scales each painted pixel so its luminance moves `amount` of the way back to the original's
@@ -30,16 +33,18 @@ export function restoreLuminance(painted: Buffer, original: Buffer, amount: numb
   return out;
 }
 
-function illustratedStyle(style: StudioStyle): 'caricature' | null {
-  return style.name.toLowerCase().includes('caricature') ? 'caricature' : null;
+function illustratedStyle(style: StudioStyle): keyof typeof FINISH | null {
+  const preset = stylePreset(style);
+  return preset === 'caricature' || preset === 'painted' ? preset : null;
 }
 
 // AI_PROVIDER=animegan: free, local (onnxruntime-node, CPU ~3-4 s) illustrated portraits with
 // the AnimeGAN2 "face paint" model (models/face_paint_512_v2_0.onnx, from
 // bryandlee/animegan2-pytorch, MIT repo — confirm the weights' licence before commercial use).
-// Not an exaggerated caricature (that needs a real image model, AI_PROVIDER=fal), but a genuine
-// painted illustration instead of a filtered photo. "Pro" and "Crayon noir" stay local photo treatments (like a
-// clean relit portrait); falls back to the mock provider if the model file is missing.
+// Used for the "painted" and "caricature" presets; the caricature is first exaggerated with the
+// local face warp (bigger head and eyes, see caricature-warp.ts), then painted. The other
+// presets stay local photo treatments (mock provider), which is also the fallback if the
+// model file is missing.
 export class AnimeGanAiProvider implements AiProvider {
   private readonly logger = new Logger(AnimeGanAiProvider.name);
   private session?: Promise<InferenceSession | null>;
@@ -47,6 +52,7 @@ export class AnimeGanAiProvider implements AiProvider {
   constructor(
     private readonly modelPath: string,
     private readonly fallback: MockAiProvider,
+    private readonly caricature?: CaricatureWarper,
   ) {}
 
   private getSession(): Promise<InferenceSession | null> {
@@ -70,6 +76,10 @@ export class AnimeGanAiProvider implements AiProvider {
     const target = illustratedStyle(style);
     const session = target ? await this.getSession() : null;
     if (!target || !session) return this.fallback.generate(selfie, style);
+
+    if (target === 'caricature' && this.caricature) {
+      selfie = (await this.caricature.warp(selfie)).image;
+    }
 
     const { data: pixels } = await sharp(selfie)
       .rotate()

@@ -1,12 +1,13 @@
-import { Check, Laugh, Pencil, UserRound, type LucideIcon } from 'lucide-react';
-import type { KioskStyleDto } from '@badgi-studio/shared';
+import { BookOpen, Check, Laugh, Palette, Pencil, UserRound, type LucideIcon } from 'lucide-react';
+import type { KioskStyleDto, StylePreset } from '@badgi-studio/shared';
 
-function toneFor(name: string): { light: string; dark: string; icon: LucideIcon } {
-  const n = name.toLowerCase();
-  if (n.includes('caricature')) return { light: '#F8DDD3', dark: '#9A3B20', icon: Laugh };
-  if (n.includes('crayon')) return { light: '#E4E4E4', dark: '#1F1F1F', icon: Pencil };
-  return { light: '#DDE5EE', dark: '#2D4A6B', icon: UserRound };
-}
+const TONES: Record<StylePreset, { light: string; dark: string; icon: LucideIcon }> = {
+  pro: { light: '#DDE5EE', dark: '#2D4A6B', icon: UserRound },
+  caricature: { light: '#F8DDD3', dark: '#9A3B20', icon: Laugh },
+  pencil: { light: '#E4E4E4', dark: '#1F1F1F', icon: Pencil },
+  painted: { light: '#F3E6CC', dark: '#8A5A12', icon: Palette },
+  comic: { light: '#FFF1B8', dark: '#B42318', icon: BookOpen },
+};
 
 interface StyleCardProps {
   style: KioskStyleDto;
@@ -16,7 +17,7 @@ interface StyleCardProps {
 }
 
 export function StyleCard({ style, description, selected, onSelect }: StyleCardProps) {
-  const tone = toneFor(style.name);
+  const tone = TONES[style.preset] ?? TONES.pro;
 
   return (
     <button

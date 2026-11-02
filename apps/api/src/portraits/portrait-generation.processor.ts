@@ -11,6 +11,7 @@ import { BrandingService } from '../branding/branding.service';
 import { SketchService } from '../sketch/sketch.service';
 import { BackgroundRemovalService } from '../segmentation/background-removal.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { DeliveriesService } from '../deliveries/deliveries.service';
 import { PORTRAIT_GENERATION_QUEUE } from '../queue/queue.module';
 
 interface GenerateJobData {
@@ -31,6 +32,7 @@ export class PortraitGenerationProcessor extends WorkerHost {
     private readonly sketchService: SketchService,
     private readonly backgroundRemoval: BackgroundRemovalService,
     private readonly realtime: RealtimeGateway,
+    private readonly deliveries: DeliveriesService,
   ) {
     super();
   }
@@ -59,6 +61,9 @@ export class PortraitGenerationProcessor extends WorkerHost {
     await this.setStatus(portrait.id, 'GENERATING');
     this.emitProgress(portrait.id, session.id, 'ink');
 
+    if (!portrait.selfieKey) {
+      throw new Error(`Portrait ${portrait.id} has no selfie (purged)`);
+    }
     const selfieBuffer = await this.storage.get(portrait.selfieKey);
     // Person on a plain background: both the styling and the traced line art should be
     // about the participant, not whatever was behind them at the venue.
@@ -80,9 +85,14 @@ export class PortraitGenerationProcessor extends WorkerHost {
       // A retouched photo is traced from the cutout instead: the mock grading adds its own
       // vignette/median/tint, which washed out the face in testing. Either way the source is
       // a centered square of the same framing as `generated`, so the colour pass lines up.
+      // When the provider changed the geometry (warp, generative model) it hands back its own
+      // photo-like source for that reason.
       generated.illustration
         ? this.sketchService.traceToSvg(generated.image, 'illustration')
-        : this.sketchService.traceToSvg(subject.image, subject.isolated ? 'isolated' : 'photo'),
+        : this.sketchService.traceToSvg(
+            generated.lineArtSource ?? subject.image,
+            subject.isolated ? 'isolated' : 'photo',
+          ),
     ]);
     this.emitProgress(portrait.id, session.id, 'frame');
     const framedKey = `portraits/${session.id}/${randomUUID()}-framed.jpg`;
@@ -104,7 +114,15 @@ export class PortraitGenerationProcessor extends WorkerHost {
 
     await this.prisma.portrait.update({
       where: { id: portrait.id },
-      data: { status: 'READY', resultKey, framedKey, sketchKey, onWall },
+      data: {
+        status: 'READY',
+        resultKey,
+        framedKey,
+        sketchKey,
+        onWall,
+        providerRequestId: generated.providerRequestId,
+        costUsd: generated.costUsd,
+      },
     });
 
     const [resultUrl, framedUrl, sketchUrl] = await Promise.all([
@@ -131,6 +149,11 @@ export class PortraitGenerationProcessor extends WorkerHost {
         participantName: session.participant.firstName,
       });
     }
+
+    // The portrait is already READY: a delivery problem must not re-run the generation job.
+    await this.deliveries.enqueueForPortrait(portrait.id).catch((error: Error) => {
+      this.logger.error(`Could not enqueue deliveries for ${portrait.id}: ${error.message}`);
+    });
   }
 
   @OnWorkerEvent('failed')

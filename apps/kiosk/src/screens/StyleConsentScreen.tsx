@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
+import type { StylePreset } from '@badgi-studio/shared';
 import { api } from '../lib/api';
 import { useKiosk } from '../state/kiosk-context';
 import { StepHeader } from '../components/StepHeader';
@@ -9,12 +10,13 @@ import { StyleCard } from '../components/StyleCard';
 import { ConsentCheckbox } from '../components/ConsentCheckbox';
 import { Button } from '../components/Button';
 
-function descriptionKeyFor(name: string): string {
-  const n = name.toLowerCase();
-  if (n.includes('caricature')) return 'style.descriptionCaricature';
-  if (n.includes('crayon')) return 'style.descriptionCrayon';
-  return 'style.descriptionPro';
-}
+const DESCRIPTION_KEYS: Record<StylePreset, string> = {
+  pro: 'style.descriptionPro',
+  caricature: 'style.descriptionCaricature',
+  pencil: 'style.descriptionCrayon',
+  painted: 'style.descriptionPainted',
+  comic: 'style.descriptionComic',
+};
 
 export function StyleConsentScreen() {
   const { t } = useTranslation();
@@ -49,12 +51,12 @@ export function StyleConsentScreen() {
       <StepHeader current={2} total={3} />
       <h1 className="mb-4 text-2xl font-bold">{t('style.title')}</h1>
 
-      <div className="mb-6 flex flex-col gap-3">
+      <div className="mb-6 grid gap-3 sm:grid-cols-2">
         {styles.map((style) => (
           <StyleCard
             key={style.id}
             style={style}
-            description={t(descriptionKeyFor(style.name)) ?? ''}
+            description={t(DESCRIPTION_KEYS[style.preset] ?? DESCRIPTION_KEYS.pro) ?? ''}
             selected={styleId === style.id}
             onSelect={() => setStyleId(style.id)}
           />

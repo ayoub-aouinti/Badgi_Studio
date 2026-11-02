@@ -25,14 +25,16 @@
   "style": {
     "title": "اختر أسلوبك",
     "descriptionPro": "صورة احترافية أنيقة بخلفية محايدة",
-    "descriptionCaricature": "كاريكاتير مصور وملون",
+    "descriptionCaricature": "كاريكاتير مصور: رأس كبير وعينان كبيرتان",
     "consentTitle": "الموافقات",
     "consentAi": "أوافق على معالجة صورتي بالذكاء الاصطناعي (إلزامي)",
     "consentWall": "أوافق على عرض صورتي على جدار المؤتمر",
     "retentionNote": "يتم حذف بياناتك تلقائياً بعد 30 يوماً.",
     "privacyLink": "سياسة الخصوصية",
     "takePhoto": "التقاط صورتي",
-    "descriptionCrayon": "رسم بقلم الرصاص الأسود على ورق أبيض"
+    "descriptionCrayon": "رسم بقلم الرصاص الأسود على ورق أبيض",
+    "descriptionPainted": "بورتريه مرسوم بألوان دافئة",
+    "descriptionComic": "شخصية قصص مصورة بألوان مسطحة وحبر"
   },
   "capture": {
     "instruction": "ضع وجهك داخل البيضاوي وابتسم",

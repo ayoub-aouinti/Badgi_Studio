@@ -16,7 +16,7 @@ describe('KioskService', () => {
     prisma = {
       kiosk: { findUnique: jest.fn(), update: jest.fn() },
     };
-    storage = { put: jest.fn(), get: jest.fn(), getUrl: jest.fn() };
+    storage = { put: jest.fn(), get: jest.fn(), getUrl: jest.fn(), delete: jest.fn() };
     service = new KioskService(prisma as unknown as PrismaService, storage, {} as BrandingService);
   });
 

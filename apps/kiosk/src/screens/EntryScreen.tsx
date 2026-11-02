@@ -20,7 +20,10 @@ export function EntryScreen() {
   const createParticipant = useMutation({
     mutationFn: api.createParticipant,
     onSuccess: ({ participantId }) => {
-      dispatch({ type: 'SET_PARTICIPANT', participant: { id: participantId, firstName, lastName } });
+      dispatch({
+        type: 'SET_PARTICIPANT',
+        participant: { id: participantId, firstName, lastName, email: email.trim() || undefined },
+      });
       navigate('/style');
     },
   });

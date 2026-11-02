@@ -1,12 +1,16 @@
 import sharp from 'sharp';
 import { StudioStyle } from '@prisma/client';
+import type { StylePreset } from '@badgi-studio/shared';
 import { MockAiProvider } from './mock-ai.provider';
+import { CaricatureWarper } from './caricature-warp';
+import { FaceDetector } from './face-detector';
 
-function fakeStyle(name: string): StudioStyle {
+function fakeStyle(preset: StylePreset): StudioStyle {
   return {
     id: 'style-1',
     configId: 'config-1',
-    name,
+    name: preset,
+    preset,
     prompt: 'test prompt',
     model: 'mock',
     previewKey: null,
@@ -33,7 +37,7 @@ describe('MockAiProvider', () => {
   it('returns a valid JPEG buffer distinct from the input selfie', async () => {
     const selfie = await tinySelfie();
 
-    const result = await provider.generate(selfie, fakeStyle('Portrait professionnel'));
+    const result = await provider.generate(selfie, fakeStyle('pro'));
 
     expect(Buffer.isBuffer(result.image)).toBe(true);
     expect(result.illustration).toBe(false);
@@ -42,17 +46,39 @@ describe('MockAiProvider', () => {
     expect(result.image.equals(selfie)).toBe(false);
   });
 
-  it('applies a different pipeline per style (caricature vs pencil vs pro)', async () => {
+  it('applies a different pipeline per preset', async () => {
     const selfie = await tinySelfie();
+    const presets: StylePreset[] = ['pro', 'caricature', 'pencil', 'painted', 'comic'];
 
-    const [pro, caricature, pencil] = await Promise.all([
-      provider.generate(selfie, fakeStyle('Portrait professionnel')),
-      provider.generate(selfie, fakeStyle('Caricature spécialité')),
-      provider.generate(selfie, fakeStyle('Crayon noir')),
-    ]);
+    const results = await Promise.all(presets.map((preset) => provider.generate(selfie, fakeStyle(preset))));
 
-    expect(pro.image.equals(caricature.image)).toBe(false);
-    expect(pro.image.equals(pencil.image)).toBe(false);
-    expect(caricature.image.equals(pencil.image)).toBe(false);
+    for (let i = 0; i < results.length; i++) {
+      for (let j = i + 1; j < results.length; j++) {
+        expect(results[i].image.equals(results[j].image)).toBe(false);
+      }
+    }
+    // Flat colours + ink: traced directly for the live drawing.
+    expect(results[presets.indexOf('comic')].illustration).toBe(true);
+  });
+
+  it('traces a warped caricature from the warped photo, not the original selfie', async () => {
+    const selfie = await tinySelfie();
+    const detector = { detect: jest.fn().mockResolvedValue({ x: 0.3, y: 0.3, width: 0.4, height: 0.4, score: 0.99 }) };
+    const warping = new MockAiProvider(new CaricatureWarper(detector as unknown as FaceDetector));
+
+    const result = await warping.generate(selfie, fakeStyle('caricature'));
+
+    expect(detector.detect).toHaveBeenCalled();
+    expect(result.lineArtSource).toBeDefined();
+    expect(result.illustration).toBe(false);
+  });
+
+  it('falls back to a colour-only caricature when no face is found', async () => {
+    const detector = { detect: jest.fn().mockResolvedValue(null) };
+    const warping = new MockAiProvider(new CaricatureWarper(detector as unknown as FaceDetector));
+
+    const result = await warping.generate(await tinySelfie(), fakeStyle('caricature'));
+
+    expect(result.lineArtSource).toBeUndefined();
   });
 });

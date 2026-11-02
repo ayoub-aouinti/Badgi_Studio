@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import type { BrandingDto, FrameStyle } from '@badgi-studio/shared';
+import type { AdminPortraitDto, BrandingDto, FrameStyle, StylePreset } from '@badgi-studio/shared';
 import { api, clearToken, getToken, UnauthorizedError, type AdminStyle } from './lib/api';
 
 const FRAME_STYLES: { value: FrameStyle; label: string; hint: string }[] = [
@@ -9,27 +9,53 @@ const FRAME_STYLES: { value: FrameStyle; label: string; hint: string }[] = [
   { value: 'none', label: 'Sans cadre', hint: 'Portrait seul (logo en coin)' },
 ];
 
-const STYLE_HINTS: Record<string, string> = {
-  professionnel: 'Portrait retouché, sobre',
-  caricature: 'Illustration colorée',
-  crayon: 'Dessin au crayon noir',
+const STYLE_HINTS: Record<StylePreset, string> = {
+  pro: 'Portrait retouché, sobre',
+  caricature: 'Grosse tête, grands yeux, illustration',
+  pencil: 'Dessin au crayon noir',
+  painted: 'Portrait peint',
+  comic: 'Bande dessinée, aplats et encrage',
 };
 
-function styleHint(name: string) {
-  const key = Object.keys(STYLE_HINTS).find((k) => name.toLowerCase().includes(k));
-  return key ? STYLE_HINTS[key] : '';
-}
+type Page = 'branding' | 'portraits';
+
+const PAGES: { value: Page; label: string }[] = [
+  { value: 'branding', label: 'Branding & styles' },
+  { value: 'portraits', label: 'Portraits' },
+];
 
 export function App() {
   const [authed, setAuthed] = useState(Boolean(getToken()));
+  const [page, setPage] = useState<Page>('branding');
   if (!authed) return <Login onDone={() => setAuthed(true)} />;
+
+  const onLogout = () => {
+    clearToken();
+    setAuthed(false);
+  };
+
   return (
-    <BrandingPage
-      onLogout={() => {
-        clearToken();
-        setAuthed(false);
-      }}
-    />
+    <div className="mx-auto max-w-6xl p-6">
+      <header className="mb-6 flex items-center justify-between">
+        <nav className="flex gap-2">
+          {PAGES.map((p) => (
+            <button
+              key={p.value}
+              onClick={() => setPage(p.value)}
+              className={`rounded-lg px-3 py-2 text-sm font-semibold ${
+                page === p.value ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </nav>
+        <button onClick={onLogout} className="text-sm text-slate-500 underline">
+          Déconnexion
+        </button>
+      </header>
+      {page === 'branding' ? <BrandingPage onLogout={onLogout} /> : <PortraitsPage onLogout={onLogout} />}
+    </div>
   );
 }
 
@@ -155,14 +181,7 @@ function BrandingPage({ onLogout }: { onLogout: () => void }) {
       .catch(handleError);
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Branding &amp; styles</h1>
-        <button onClick={onLogout} className="text-sm text-slate-500 underline">
-          Déconnexion
-        </button>
-      </header>
-
+    <div>
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="flex flex-col gap-6">
           <section className="card flex flex-col gap-4">
@@ -268,7 +287,7 @@ function BrandingPage({ onLogout }: { onLogout: () => void }) {
               <label key={style.id} className="flex items-center gap-3">
                 <input type="checkbox" checked={style.active} onChange={() => toggleStyle(style)} />
                 <span className="font-semibold">{style.name}</span>
-                <span className="text-sm text-slate-500">{styleHint(style.name)}</span>
+                <span className="text-sm text-slate-500">{STYLE_HINTS[style.preset] ?? ''}</span>
               </label>
             ))}
           </section>
@@ -297,6 +316,126 @@ function BrandingPage({ onLogout }: { onLogout: () => void }) {
         </aside>
       </div>
     </div>
+  );
+}
+
+const STATUS_LABELS: Record<AdminPortraitDto['status'], string> = {
+  QUEUED: 'En attente',
+  MODERATING: 'Vérification',
+  GENERATING: 'Génération',
+  READY: 'Prêt',
+  REJECTED: 'Rejeté',
+  FAILED: 'Échec',
+};
+
+function PortraitsPage({ onLogout }: { onLogout: () => void }) {
+  const [portraits, setPortraits] = useState<AdminPortraitDto[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
+
+  const handleError = useCallback(
+    (err: unknown) => {
+      if (err instanceof UnauthorizedError) onLogout();
+      else setError((err as Error).message);
+    },
+    [onLogout],
+  );
+
+  const load = useCallback(() => {
+    api.getPortraits().then(setPortraits).catch(handleError);
+  }, [handleError]);
+
+  useEffect(() => {
+    load();
+    const timer = setInterval(load, 15000);
+    return () => clearInterval(timer);
+  }, [load]);
+
+  async function setOnWall(portrait: AdminPortraitDto, onWall: boolean) {
+    setPending(portrait.id);
+    setError(null);
+    try {
+      const updated = await api.updatePortrait(portrait.id, { onWall });
+      setPortraits((list) => list?.map((p) => (p.id === updated.id ? updated : p)) ?? null);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setPending(null);
+    }
+  }
+
+  if (!portraits) return <p className="text-slate-500">{error ?? 'Chargement…'}</p>;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-2xl font-bold">Portraits</h1>
+        <span className="text-sm text-slate-500">{portraits.length} plus récents</span>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {portraits.length === 0 && <p className="text-slate-500">Aucun portrait pour le moment.</p>}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {portraits.map((portrait) => (
+          <article key={portrait.id} className="card flex flex-col gap-2 p-3">
+            {portrait.imageUrl ? (
+              <a href={portrait.imageUrl} target="_blank" rel="noreferrer">
+                <img src={portrait.imageUrl} alt="" className="aspect-square w-full rounded-lg object-cover" />
+              </a>
+            ) : (
+              <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
+                {portrait.purged ? 'Supprimé (purge)' : STATUS_LABELS[portrait.status]}
+              </div>
+            )}
+            <div className="text-sm">
+              <p className="truncate font-semibold">{portrait.participantName}</p>
+              <p className="truncate text-xs text-slate-500">
+                {portrait.styleName} · {new Date(portrait.createdAt).toLocaleString('fr-FR')}
+              </p>
+            </div>
+            <PortraitWallControl
+              portrait={portrait}
+              busy={pending === portrait.id}
+              onChange={(onWall) => setOnWall(portrait, onWall)}
+            />
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PortraitWallControl({
+  portrait,
+  busy,
+  onChange,
+}: {
+  portrait: AdminPortraitDto;
+  busy: boolean;
+  onChange: (onWall: boolean) => void;
+}) {
+  if (portrait.purged || portrait.status !== 'READY') return null;
+  if (portrait.onWall) {
+    return (
+      <button
+        onClick={() => onChange(false)}
+        disabled={busy}
+        className="rounded-lg border border-red-200 py-1.5 text-sm font-semibold text-red-600 disabled:opacity-40"
+      >
+        Retirer du mur
+      </button>
+    );
+  }
+  if (!portrait.wallConsent) {
+    return <p className="py-1.5 text-center text-xs text-slate-400">Pas de consentement mur</p>;
+  }
+  return (
+    <button
+      onClick={() => onChange(true)}
+      disabled={busy}
+      className="rounded-lg border border-slate-300 py-1.5 text-sm font-semibold disabled:opacity-40"
+    >
+      Remettre sur le mur
+    </button>
   );
 }
 

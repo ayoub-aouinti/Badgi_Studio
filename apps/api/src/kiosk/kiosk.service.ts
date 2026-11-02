@@ -3,7 +3,7 @@ import { Kiosk } from '@prisma/client';
 import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { STORAGE_DRIVER, StorageService } from '../storage/storage.interface';
-import { KioskConfigDto } from '@badgi-studio/shared';
+import { KioskConfigDto, StylePreset } from '@badgi-studio/shared';
 import { BrandingService } from '../branding/branding.service';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 
@@ -49,6 +49,7 @@ export class KioskService {
           id: style.id,
           name: style.name,
           previewUrl: style.previewKey ? await this.storage.getUrl(style.previewKey) : undefined,
+          preset: style.preset as StylePreset,
           sortOrder: style.sortOrder,
         })),
       ),

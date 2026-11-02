@@ -15,9 +15,15 @@ export interface ConsentInput {
   wall: boolean;
 }
 
+// Rendering recipe of a style (studio_styles.preset): drives the local providers and the
+// style card look on the kiosk; paid providers (fal/gemini) follow the style prompt instead.
+export const STYLE_PRESETS = ['pro', 'caricature', 'pencil', 'painted', 'comic'] as const;
+export type StylePreset = (typeof STYLE_PRESETS)[number];
+
 export interface KioskStyleDto {
   id: string;
   name: string;
+  preset: StylePreset;
   previewUrl?: string;
   sortOrder: number;
 }
@@ -135,4 +141,27 @@ export interface WallNewEvent {
 
 export interface WallRemoveEvent {
   portraitId: string;
+}
+
+// Admin space (apps/dashboard <-> apps/api /admin/portraits).
+export interface AdminPortraitDto {
+  id: string;
+  publicCode: string;
+  status: PortraitStatus;
+  participantName: string;
+  styleName: string;
+  // Framed portrait; undefined until ready, and again once purged.
+  imageUrl?: string;
+  onWall: boolean;
+  pinned: boolean;
+  // Only a participant who consented can be (re)shown on the wall.
+  wallConsent: boolean;
+  createdAt: string;
+  purgeAt: string;
+  purged: boolean;
+}
+
+export interface UpdateAdminPortraitRequest {
+  onWall?: boolean;
+  pinned?: boolean;
 }

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Printer, Sparkles } from 'lucide-react';
+import { Mail, Printer, Sparkles } from 'lucide-react';
 import { useKiosk } from '../state/kiosk-context';
 import { useIdleReset } from '../hooks/useIdleReset';
 import { Button } from '../components/Button';
@@ -28,19 +28,26 @@ export function ResultScreen() {
 
   if (!state.portraitResult || !state.participant) return null;
 
+  // The public page, not the raw image URL: storage URLs can expire (S3 signed URLs).
+  const downloadUrl = `${API_URL}/p/${state.portraitResult.publicCode}`;
   const whatsappMessage = t('result.whatsappMessage', {
     firstName: state.participant.firstName,
     event: state.config?.branding.eventName ?? '',
-    link: state.portraitResult.framedUrl,
+    link: downloadUrl,
   });
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage ?? '')}`;
-  const downloadUrl = `${API_URL}/p/${state.portraitResult.publicCode}`;
 
   return (
     <div className="kiosk-shell items-center gap-6">
       <h1 className="text-center text-2xl font-bold">
         {t('result.title', { firstName: state.participant.firstName })}
       </h1>
+      {state.participant.email && (
+        <p className="-mt-3 flex items-center gap-2 text-sm font-semibold text-ink-soft">
+          <Mail size={16} />
+          {t('result.sentEmail')} · {state.participant.email}
+        </p>
+      )}
 
       <div className="w-full overflow-hidden rounded-2xl border border-border-soft shadow-sm">
         <img src={state.portraitResult.framedUrl} alt="" className="w-full object-cover" />

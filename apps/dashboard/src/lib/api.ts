@@ -1,4 +1,4 @@
-import type { BrandingDto } from '@badgi-studio/shared';
+import type { AdminPortraitDto, BrandingDto, StylePreset, UpdateAdminPortraitRequest } from '@badgi-studio/shared';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 const TOKEN_KEY = 'studio-admin-token';
@@ -21,6 +21,7 @@ export type BrandingUpdate = Partial<
 export interface AdminStyle {
   id: string;
   name: string;
+  preset: StylePreset;
   active: boolean;
 }
 
@@ -83,4 +84,9 @@ export const api = {
 
   setStyleActive: async (id: string, active: boolean): Promise<AdminStyle> =>
     (await request(`/admin/styles/${id}`, { method: 'PATCH', body: JSON.stringify({ active }) })).json(),
+
+  getPortraits: async (): Promise<AdminPortraitDto[]> => (await request('/admin/portraits')).json(),
+
+  updatePortrait: async (id: string, dto: UpdateAdminPortraitRequest): Promise<AdminPortraitDto> =>
+    (await request(`/admin/portraits/${id}`, { method: 'PATCH', body: JSON.stringify(dto) })).json(),
 };

@@ -6,6 +6,7 @@ import {
   Get,
   Header,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -16,12 +17,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import type { Response } from 'express';
 import { BrandingService } from '../branding/branding.service';
 import { UpdateBrandingDto } from '../branding/dto/update-branding.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdminAuth, AdminGuard } from './admin.guard';
+import { AdminPortraitsService } from './admin-portraits.service';
 
 class LoginDto {
   @IsString()
@@ -33,6 +35,16 @@ class ToggleStyleDto {
   active!: boolean;
 }
 
+class UpdatePortraitDto {
+  @IsOptional()
+  @IsBoolean()
+  onWall?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  pinned?: boolean;
+}
+
 @ApiTags('admin')
 @Controller('admin')
 export class AdminController {
@@ -40,6 +52,7 @@ export class AdminController {
     private readonly auth: AdminAuth,
     private readonly branding: BrandingService,
     private readonly prisma: PrismaService,
+    private readonly portraits: AdminPortraitsService,
   ) {}
 
   @Post('login')
@@ -98,7 +111,7 @@ export class AdminController {
     return this.prisma.studioStyle.findMany({
       where: { configId: config.id },
       orderBy: { sortOrder: 'asc' },
-      select: { id: true, name: true, active: true },
+      select: { id: true, name: true, preset: true, active: true },
     });
   }
 
@@ -109,7 +122,21 @@ export class AdminController {
     return this.prisma.studioStyle.update({
       where: { id },
       data: { active: dto.active },
-      select: { id: true, name: true, active: true },
+      select: { id: true, name: true, preset: true, active: true },
     });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
+  @Get('portraits')
+  listPortraits() {
+    return this.portraits.list();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
+  @Patch('portraits/:id')
+  updatePortrait(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdatePortraitDto) {
+    return this.portraits.update(id, dto);
   }
 }

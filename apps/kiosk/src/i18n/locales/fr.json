@@ -25,14 +25,16 @@
   "style": {
     "title": "Choisissez votre style",
     "descriptionPro": "Portrait sobre et professionnel, fond neutre",
-    "descriptionCaricature": "Caricature illustrée et colorée",
+    "descriptionCaricature": "Caricature illustrée : grosse tête, grands yeux",
     "consentTitle": "Consentements",
     "consentAi": "J'accepte le traitement IA de ma photo (obligatoire)",
     "consentWall": "J'accepte que mon portrait apparaisse sur le mur du congrès",
     "retentionNote": "Vos données sont supprimées automatiquement après 30 jours.",
     "privacyLink": "Politique de confidentialité",
     "takePhoto": "Prendre ma photo",
-    "descriptionCrayon": "Dessin au crayon noir sur papier blanc"
+    "descriptionCrayon": "Dessin au crayon noir sur papier blanc",
+    "descriptionPainted": "Portrait peint aux couleurs chaudes",
+    "descriptionComic": "Personnage de bande dessinée, aplats et encrage"
   },
   "capture": {
     "instruction": "Placez votre visage dans l'ovale et souriez",

@@ -12,6 +12,9 @@ import { PortraitsModule } from './portraits/portraits.module';
 import { WallModule } from './wall/wall.module';
 import { BrandingModule } from './branding/branding.module';
 import { AdminModule } from './admin/admin.module';
+import { MailModule } from './mail/mail.module';
+import { PublicModule } from './public/public.module';
+import { PurgeModule } from './purge/purge.module';
 
 @Module({
   imports: [
@@ -32,6 +35,9 @@ import { AdminModule } from './admin/admin.module';
     SessionsModule,
     PortraitsModule,
     WallModule,
+    MailModule,
+    PublicModule,
+    PurgeModule,
   ],
   controllers: [HealthController],
 })

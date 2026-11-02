@@ -4,6 +4,7 @@ import request from 'supertest';
 import sharp from 'sharp';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { PurgeService } from '../src/purge/purge.service';
 
 // End-to-end happy path: pair a kiosk, enter a name, open a session,
 // upload a selfie and wait for the real BullMQ worker (mock AI provider) to
@@ -66,7 +67,7 @@ describe('Kiosk flow (e2e)', () => {
       const participantRes = await request(server)
         .post('/kiosk/participants')
         .set('Authorization', auth)
-        .send({ firstName: 'Amira', lastName: 'Ben Ali' })
+        .send({ firstName: 'Amira', lastName: 'Ben Ali', email: 'amira.e2e@example.com' })
         .expect(201);
       participantId = participantRes.body.participantId;
 
@@ -99,10 +100,60 @@ describe('Kiosk flow (e2e)', () => {
       expect(finalStatus.status).toBe('READY');
       expect(finalStatus.resultKey).toBeTruthy();
       expect(finalStatus.framedKey).toBeTruthy();
+      expect(finalStatus.onWall).toBe(true);
+
+      // Public download page (docs/SPEC.md: GET /p/:code), linked from the kiosk QR code.
+      const pageRes = await request(server).get(`/p/${finalStatus.publicCode}`).expect(200);
+      expect(pageRes.text).toContain('Amira');
+      const imageRes = await request(server).get(`/p/${finalStatus.publicCode}/image?download=1`).expect(200);
+      expect(imageRes.headers['content-type']).toContain('image/jpeg');
+      expect(imageRes.headers['content-disposition']).toContain('attachment');
+
+      // Email sent through MAIL_DRIVER=smtp (Mailpit in docker-compose).
+      const delivery = await waitFor(async () => {
+        const found = await prisma.delivery.findFirst({ where: { portraitId: portraitId as string } });
+        return found && found.status !== 'PENDING' ? found : null;
+      });
+      expect(delivery).toEqual(
+        expect.objectContaining({ channel: 'EMAIL', recipient: 'amira.e2e@example.com', status: 'SENT' }),
+      );
+
+      // Organiser removes the portrait from the wall.
+      const loginRes = await request(server)
+        .post('/admin/login')
+        .send({ password: process.env.ADMIN_PASSWORD ?? 'admin' })
+        .expect(201);
+      const adminAuth = `Bearer ${loginRes.body.token}`;
+      const listRes = await request(server).get('/admin/portraits').set('Authorization', adminAuth).expect(200);
+      expect(listRes.body.map((p: { id: string }) => p.id)).toContain(portraitId);
+      const removeRes = await request(server)
+        .patch(`/admin/portraits/${portraitId}`)
+        .set('Authorization', adminAuth)
+        .send({ onWall: false })
+        .expect(200);
+      expect(removeRes.body.onWall).toBe(false);
+
+      // Retention elapsed: the purge deletes the files and the public page disappears.
+      await prisma.portrait.update({ where: { id: portraitId }, data: { purgeAt: new Date(Date.now() - 1000) } });
+      await app.get(PurgeService).purgeDue();
+      const purged = await prisma.portrait.findUniqueOrThrow({ where: { id: portraitId } });
+      expect(purged.purgedAt).toBeTruthy();
+      expect(purged.framedKey).toBeNull();
+      await request(server).get(`/p/${finalStatus.publicCode}`).expect(404);
     },
-    30000,
+    60000,
   );
 });
+
+async function waitFor<T>(probe: () => Promise<T | null>, timeoutMs = 15000): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const value = await probe();
+    if (value) return value;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  throw new Error('Timed out waiting for condition');
+}
 
 async function waitForPortraitCompletion(prisma: PrismaService, portraitId: string) {
   const deadline = Date.now() + 20000;

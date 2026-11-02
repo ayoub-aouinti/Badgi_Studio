@@ -23,7 +23,7 @@ describe('PortraitsService', () => {
       studioStyle: { findUnique: jest.fn() },
       portrait: { create: jest.fn() },
     };
-    storage = { put: jest.fn().mockResolvedValue('key'), get: jest.fn(), getUrl: jest.fn() };
+    storage = { put: jest.fn().mockResolvedValue('key'), get: jest.fn(), getUrl: jest.fn(), delete: jest.fn() };
     queue = { add: jest.fn() };
     service = new PortraitsService(
       prisma as unknown as PrismaService,
