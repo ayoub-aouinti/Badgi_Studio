@@ -6,7 +6,6 @@ import { WS_EVENTS } from '@badgi-studio/shared';
 import { joinSessionRoom, onEvent } from '../lib/socket';
 import { useKiosk } from '../state/kiosk-context';
 import { ProgressSteps } from '../components/ProgressSteps';
-import { SponsorBadge } from '../components/SponsorBadge';
 import { DrawnPortrait, type DrawPhase } from '../components/DrawnPortrait';
 
 const STEP_ORDER: PortraitProgressStep[] = ['sketch', 'ink', 'color', 'frame'];
@@ -125,9 +124,6 @@ export function GenerationScreen() {
 
       <ProgressSteps steps={steps} activeIndex={activeIndex} />
 
-      <div className="mt-auto w-full">
-        <SponsorBadge sponsorName={state.config?.sponsorName} sponsorLogoUrl={state.config?.sponsorLogoUrl} dark />
-      </div>
     </div>
   );
 }

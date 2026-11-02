@@ -2,9 +2,7 @@
   "common": {
     "back": "Retour",
     "or": "ou",
-    "recommended": "Recommandé",
     "step": "Étape {{current}} sur {{total}}",
-    "poweredBy": "Offert par {{sponsor}}",
     "fictionalExample": "Exemple fictif",
     "loading": "Chargement…",
     "error": "Une erreur est survenue",
@@ -21,49 +19,20 @@
     "title": "Votre portrait IA en 30 secondes.",
     "start": "Touchez pour commencer",
     "example1": "Portrait pro",
-    "example2": "Caricature spécialité",
-    "example3": "Portrait peint"
-  },
-  "identify": {
-    "title": "Qui êtes-vous ?",
-    "scanCard": "Scanner mon badge Badgi",
-    "scanHint": "Placez le QR code de votre badge devant la caméra",
-    "manualButton": "Saisir mes informations"
-  },
-  "manual": {
-    "title": "Vos informations",
-    "firstName": "Prénom",
-    "lastName": "Nom",
-    "email": "Email",
-    "whatsapp": "WhatsApp",
-    "specialty": "Spécialité",
-    "specialtyOptional": "Spécialité (facultatif)",
-    "contactNote": "Email ou WhatsApp : au moins l'un des deux",
-    "continue": "Continuer"
-  },
-  "badge": {
-    "recognized": "Badge reconnu",
-    "greeting": "Bonjour {{firstName}} !",
-    "name": "Nom",
-    "specialty": "Spécialité",
-    "institution": "Établissement",
-    "email": "Email",
-    "badgeLabel": "Badge",
-    "notMe": "Ce n'est pas moi",
-    "confirm": "C'est bien moi, continuer"
+    "example2": "Caricature",
+    "example3": "Crayon noir"
   },
   "style": {
     "title": "Choisissez votre style",
     "descriptionPro": "Portrait sobre et professionnel, fond neutre",
-    "descriptionCaricature": "Caricature illustrée selon votre spécialité",
-    "descriptionPeint": "Effet peint, palette chaleureuse",
+    "descriptionCaricature": "Caricature illustrée et colorée",
     "consentTitle": "Consentements",
     "consentAi": "J'accepte le traitement IA de ma photo (obligatoire)",
     "consentWall": "J'accepte que mon portrait apparaisse sur le mur du congrès",
-    "consentSponsor": "J'accepte de partager mes coordonnées avec le sponsor",
     "retentionNote": "Vos données sont supprimées automatiquement après 30 jours.",
     "privacyLink": "Politique de confidentialité",
-    "takePhoto": "Prendre ma photo"
+    "takePhoto": "Prendre ma photo",
+    "descriptionCrayon": "Dessin au crayon noir sur papier blanc"
   },
   "capture": {
     "instruction": "Placez votre visage dans l'ovale et souriez",
@@ -91,5 +60,14 @@
     "tryAnotherStyle": "Essayer un autre style",
     "finish": "Terminer",
     "whatsappMessage": "Bonjour {{firstName}}, voici votre portrait du {{event}} ! Version HD : {{link}}"
+  },
+  "entry": {
+    "title": "Vos informations",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "Email",
+    "whatsapp": "WhatsApp",
+    "contactNote": "Email ou WhatsApp (facultatif) pour recevoir votre portrait",
+    "continue": "Continuer"
   }
 }

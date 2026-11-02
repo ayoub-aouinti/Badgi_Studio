@@ -11,9 +11,6 @@ export class ConsentsDto {
   @IsBoolean()
   wall!: boolean;
 
-  @ApiProperty()
-  @IsBoolean()
-  sponsor!: boolean;
 }
 
 export class CreateSessionDto {

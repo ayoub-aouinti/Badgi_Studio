@@ -22,7 +22,6 @@ export function FeaturedPortrait({ portrait }: { portrait: WallFeedPortraitDto }
       </div>
       <div className="mt-4 text-center">
         <p className="text-2xl font-bold">{portrait.participantName}</p>
-        {portrait.specialty && <p className="text-white/60">{portrait.specialty}</p>}
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ async function main() {
     where: { slug: 'congres-demo-2026' },
     update: {},
     create: {
-      name: 'Congrès Démo Badgi 2026',
+      name: 'Congrès Démo 2026',
       slug: 'congres-demo-2026',
       startsAt: new Date('2026-11-10T08:00:00Z'),
       endsAt: new Date('2026-11-12T18:00:00Z'),
@@ -21,8 +21,7 @@ async function main() {
     create: {
       eventId: event.id,
       enabled: true,
-      frameTemplate: 'default',
-      sponsorName: 'Sponsor Démo',
+      tagline: 'Votre portrait souvenir',
       retentionDays: 30,
       wallToken: randomUUID(),
     },
@@ -31,35 +30,33 @@ async function main() {
   const styles = [
     {
       name: 'Portrait professionnel',
-      prompt:
-        'Professional studio portrait, neutral background, soft lighting, business attire, high detail.',
+      prompt: 'Professional studio portrait, neutral background, soft lighting, high detail.',
       model: 'mock',
       sortOrder: 0,
     },
     {
-      name: 'Caricature spécialité',
-      prompt:
-        'Playful caricature portrait referencing the attendee medical specialty, warm colors, exaggerated friendly features.',
+      name: 'Caricature',
+      prompt: 'Playful caricature portrait, warm colors, exaggerated friendly features.',
       model: 'mock',
       sortOrder: 1,
     },
     {
-      name: 'Portrait peint',
-      prompt:
-        'Painted portrait, oil painting texture, warm palette, congress-themed background.',
+      name: 'Crayon noir',
+      prompt: 'Black pencil sketch portrait on white paper, fine graphite shading.',
       model: 'mock',
       sortOrder: 2,
     },
   ];
 
+  // Matched by sort order so re-seeding renames styles left over from earlier versions.
   for (const style of styles) {
     const existing = await prisma.studioStyle.findFirst({
-      where: { configId: studioConfig.id, name: style.name },
+      where: { configId: studioConfig.id, sortOrder: style.sortOrder },
     });
-    if (!existing) {
-      await prisma.studioStyle.create({
-        data: { ...style, configId: studioConfig.id, active: true },
-      });
+    if (existing) {
+      await prisma.studioStyle.update({ where: { id: existing.id }, data: style });
+    } else {
+      await prisma.studioStyle.create({ data: { ...style, configId: studioConfig.id, active: true } });
     }
   }
 
@@ -74,42 +71,7 @@ async function main() {
     },
   });
 
-  const attendees = [
-    {
-      firstName: 'Amira',
-      lastName: 'Ben Ali',
-      email: 'amira.benali@example.com',
-      whatsappE164: '+21620000001',
-      specialty: 'Cardiologie',
-      badgeToken: 'badge-demo-amira',
-    },
-    {
-      firstName: 'Karim',
-      lastName: 'Trabelsi',
-      email: 'karim.trabelsi@example.com',
-      whatsappE164: '+21620000002',
-      specialty: 'Pédiatrie',
-      badgeToken: 'badge-demo-karim',
-    },
-    {
-      firstName: 'Sana',
-      lastName: 'Gharbi',
-      email: 'sana.gharbi@example.com',
-      whatsappE164: '+21620000003',
-      specialty: 'Dermatologie',
-      badgeToken: 'badge-demo-sana',
-    },
-  ];
-
-  for (const attendee of attendees) {
-    await prisma.attendee.upsert({
-      where: { badgeToken: attendee.badgeToken },
-      update: {},
-      create: { ...attendee, eventId: event.id },
-    });
-  }
-
-  console.log('Seed done:', { event: event.slug, kiosk: '123456', attendees: attendees.length });
+  console.log('Seed done:', { event: event.slug, kiosk: '123456' });
 }
 
 main()

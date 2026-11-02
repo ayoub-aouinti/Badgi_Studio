@@ -1,10 +1,10 @@
-import { Check, Laugh, Paintbrush, UserRound, type LucideIcon } from 'lucide-react';
+import { Check, Laugh, Pencil, UserRound, type LucideIcon } from 'lucide-react';
 import type { KioskStyleDto } from '@badgi-studio/shared';
 
 function toneFor(name: string): { light: string; dark: string; icon: LucideIcon } {
   const n = name.toLowerCase();
   if (n.includes('caricature')) return { light: '#F8DDD3', dark: '#9A3B20', icon: Laugh };
-  if (n.includes('peint')) return { light: '#E9DCC2', dark: '#2C6FB0', icon: Paintbrush };
+  if (n.includes('crayon')) return { light: '#E4E4E4', dark: '#1F1F1F', icon: Pencil };
   return { light: '#DDE5EE', dark: '#2D4A6B', icon: UserRound };
 }
 

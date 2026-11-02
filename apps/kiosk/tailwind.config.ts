@@ -12,10 +12,11 @@ export default {
         'ink-soft-2': '#4A5868',
         border: '#C9D2D0',
         'border-soft': '#E3E8E7',
+        // Driven by the organiser branding (see hooks/useBrandTheme); defaults in index.css.
         teal: {
-          DEFAULT: '#0B6E69',
-          light: '#DDEFEC',
-          vivid: '#5FD3C8',
+          DEFAULT: 'rgb(var(--brand) / <alpha-value>)',
+          light: 'rgb(var(--brand-light) / <alpha-value>)',
+          vivid: 'rgb(var(--brand-accent) / <alpha-value>)',
         },
         coral: {
           DEFAULT: '#C4502F',
@@ -24,7 +25,7 @@ export default {
         style: {
           pro: { light: '#DDE5EE', dark: '#2D4A6B' },
           caricature: { light: '#F8DDD3', dark: '#9A3B20' },
-          peint: { light: '#E9DCC2', blue: '#2C6FB0' },
+          crayon: { light: '#E4E4E4', dark: '#1F1F1F' },
         },
       },
       fontFamily: {

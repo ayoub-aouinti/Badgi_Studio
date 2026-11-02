@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { StudioStyle } from '@prisma/client';
 import sharp from 'sharp';
-import { AiProvider } from './ai-provider.interface';
+import { AiProvider, GeneratedPortrait } from './ai-provider.interface';
 
 // Free, local "AI" effect: color grading + median smoothing + vignette per style, so each
 // style reads as a distinct treatment instead of a flat Instagram-style color-tint filter
@@ -34,21 +34,40 @@ const CARICATURE: StylePipeline = {
   sharpen: true,
   vignette: 0.12,
 };
-const PEINT: StylePipeline = {
-  saturation: 1.3,
-  brightness: 1.0,
-  hue: 14,
-  contrast: 1.05,
-  median: 9,
-  sharpen: false,
-  vignette: 0.35,
-};
+
+function isPencil(style: StudioStyle): boolean {
+  return /crayon|pencil/i.test(style.name);
+}
 
 function pipelineForStyle(style: StudioStyle): StylePipeline {
-  const name = style.name.toLowerCase();
-  if (name.includes('caricature')) return CARICATURE;
-  if (name.includes('peint')) return PEINT;
-  return PRO;
+  return style.name.toLowerCase().includes('caricature') ? CARICATURE : PRO;
+}
+
+// Black pencil drawing: the classic "colour dodge of the inverted blur" trick. Flat areas go
+// white, edges and shading stay as graphite strokes.
+async function pencilSketch(selfie: Buffer): Promise<Buffer> {
+  const gray = await sharp(selfie)
+    .rotate()
+    .resize(1024, 1024, { fit: 'cover' })
+    .grayscale()
+    .normalise()
+    .png()
+    .toBuffer();
+  const invertedBlur = await sharp(gray).negate().blur(10).png().toBuffer();
+  const lines = await sharp(gray)
+    .composite([{ input: invertedBlur, blend: 'colour-dodge' }])
+    .grayscale()
+    .png()
+    .toBuffer();
+  // Flat areas dodge to pure white, including dark beards and hair; a light tonal wash
+  // (the blurred photo, compressed to 140-255) puts graphite shading back under the lines.
+  const shade = await sharp(gray).blur(4).linear(0.45, 140).png().toBuffer();
+  return sharp(lines)
+    .composite([{ input: shade, blend: 'multiply' }])
+    .grayscale()
+    .gamma(1.3)
+    .jpeg({ quality: 92 })
+    .toBuffer();
 }
 
 async function applyVignette(image: Buffer, strength: number): Promise<Buffer> {
@@ -73,7 +92,13 @@ async function applyVignette(image: Buffer, strength: number): Promise<Buffer> {
 
 @Injectable()
 export class MockAiProvider implements AiProvider {
-  async generate(selfie: Buffer, style: StudioStyle): Promise<Buffer> {
+  async generate(selfie: Buffer, style: StudioStyle): Promise<GeneratedPortrait> {
+    const image = isPencil(style) ? await pencilSketch(selfie) : await this.retouch(selfie, style);
+    return { image, illustration: false };
+  }
+
+  // Colour-graded photo per style; also used by AnimeGanAiProvider for the "pro" style.
+  async retouch(selfie: Buffer, style: StudioStyle): Promise<Buffer> {
     const p = pipelineForStyle(style);
 
     let pipeline = sharp(selfie).rotate().resize(1024, 1024, { fit: 'cover' });

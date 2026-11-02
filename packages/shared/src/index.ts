@@ -1,4 +1,4 @@
-// Shared types and DTOs for Badgi Studio apps (api, kiosk, wall, dashboard).
+// Shared types and DTOs for Portrait Studio apps (api, kiosk, wall, dashboard).
 
 export type PortraitStatus =
   | 'QUEUED'
@@ -10,12 +10,9 @@ export type PortraitStatus =
 
 export type PortraitProgressStep = 'sketch' | 'ink' | 'color' | 'frame';
 
-export type ParticipantSource = 'BADGE' | 'MANUAL';
-
 export interface ConsentInput {
   aiProcessing: boolean;
   wall: boolean;
-  sponsor: boolean;
 }
 
 export interface KioskStyleDto {
@@ -25,10 +22,24 @@ export interface KioskStyleDto {
   sortOrder: number;
 }
 
-export interface KioskConfigDto {
+export type FrameStyle = 'none' | 'banner' | 'border' | 'polaroid';
+
+// Branding edited in the admin space; applied to the kiosk, the wall and the portrait frame.
+export interface BrandingDto {
   eventName: string;
-  sponsorName?: string;
-  sponsorLogoUrl?: string;
+  tagline?: string;
+  logoUrl?: string;
+  primaryColor: string;
+  accentColor: string;
+  frameStyle: FrameStyle;
+  frameColor: string;
+  frameWidth: number;
+  showName: boolean;
+  showLogo: boolean;
+}
+
+export interface KioskConfigDto {
+  branding: BrandingDto;
   languages: string[];
   styles: KioskStyleDto[];
 }
@@ -39,8 +50,6 @@ export interface ParticipantDto {
   lastName: string;
   email?: string;
   whatsappE164?: string;
-  specialty?: string;
-  source: ParticipantSource;
 }
 
 // Socket.IO event names shared between apps/api, apps/kiosk and apps/wall.
@@ -75,22 +84,11 @@ export interface PairKioskResponse {
   deviceToken: string;
 }
 
-export interface BadgeScanResponse {
-  attendeeId: string;
-  firstName: string;
-  lastName: string;
-  specialty?: string;
-  emailMasked?: string;
-  whatsappE164?: string;
-}
-
 export interface CreateParticipantRequest {
   firstName: string;
   lastName: string;
   email?: string;
   whatsappE164?: string;
-  specialty?: string;
-  attendeeId?: string;
 }
 
 export interface CreateParticipantResponse {
@@ -118,14 +116,11 @@ export interface WallFeedPortraitDto {
   resultUrl?: string;
   sketchUrl?: string;
   participantName: string;
-  specialty?: string;
   createdAt: string;
 }
 
 export interface WallFeedResponse {
-  eventName: string;
-  sponsorName?: string;
-  sponsorLogoUrl?: string;
+  branding: BrandingDto;
   portraitCount: number;
   portraits: WallFeedPortraitDto[];
 }
@@ -136,7 +131,6 @@ export interface WallNewEvent {
   resultUrl?: string;
   sketchUrl?: string;
   participantName: string;
-  specialty?: string;
 }
 
 export interface WallRemoveEvent {

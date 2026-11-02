@@ -5,7 +5,6 @@ import { KioskAuthGuard } from '../common/guards/kiosk-auth.guard';
 import { CurrentKiosk } from '../common/decorators/current-kiosk.decorator';
 import { KioskService } from './kiosk.service';
 import { PairKioskDto } from './dto/pair-kiosk.dto';
-import { BadgeScanDto } from './dto/badge-scan.dto';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 
 @ApiTags('kiosk')
@@ -23,13 +22,6 @@ export class KioskController {
   @Get('config')
   getConfig(@CurrentKiosk() kiosk: Kiosk) {
     return this.kioskService.getConfig(kiosk);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(KioskAuthGuard)
-  @Post('badge-scan')
-  badgeScan(@CurrentKiosk() kiosk: Kiosk, @Body() dto: BadgeScanDto) {
-    return this.kioskService.badgeScan(dto, kiosk.eventId);
   }
 
   @ApiBearerAuth()

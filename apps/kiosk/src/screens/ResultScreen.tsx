@@ -30,7 +30,7 @@ export function ResultScreen() {
 
   const whatsappMessage = t('result.whatsappMessage', {
     firstName: state.participant.firstName,
-    event: state.config?.eventName ?? '',
+    event: state.config?.branding.eventName ?? '',
     link: state.portraitResult.framedUrl,
   });
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage ?? '')}`;

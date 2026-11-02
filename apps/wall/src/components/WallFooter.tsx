@@ -1,20 +1,12 @@
-interface WallFooterProps {
-  sponsorName?: string;
-  sponsorLogoUrl?: string;
-}
+import type { BrandingDto } from '@badgi-studio/shared';
 
-export function WallFooter({ sponsorName, sponsorLogoUrl }: WallFooterProps) {
+export function WallFooter({ branding }: { branding: BrandingDto }) {
   return (
     <footer className="flex items-center justify-between border-t border-white/10 px-16 py-6">
-      <div className="flex items-center gap-2 text-white/70">
-        <span className="font-heading text-lg font-extrabold text-white">badgi</span>
-        <span className="rounded-full bg-teal px-2 py-0.5 text-xs font-semibold text-white">Studio</span>
-      </div>
-      {sponsorName && (
-        <div className="flex items-center gap-3 text-white/70">
-          {sponsorLogoUrl && <img src={sponsorLogoUrl} alt={sponsorName} className="h-8 w-auto" />}
-          <span className="text-sm">Offert par {sponsorName}</span>
-        </div>
+      {branding.logoUrl ? (
+        <img src={branding.logoUrl} alt={branding.eventName} className="h-10 w-auto max-w-[260px] object-contain" />
+      ) : (
+        <span className="font-heading text-lg font-extrabold text-white">{branding.eventName}</span>
       )}
     </footer>
   );

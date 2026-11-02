@@ -18,14 +18,14 @@ async function bootstrap() {
   );
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Badgi Studio API')
+    .setTitle('Portrait Studio API')
     .setDescription('Borne selfie IA — appairage, sessions, portraits, mur en direct.')
     .setVersion('0.0.1')
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3100;
   await app.listen(port);
 }
 

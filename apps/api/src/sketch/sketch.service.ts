@@ -11,13 +11,20 @@ const TRACE_SIZE = 480;
 // line art. The dodge technique produces genuine pencil-like shading that potrace can
 // binarize cleanly.
 //
-// Normally the image is already isolated (BackgroundRemovalService: person on a plain
-// background), so we trace with a sensitive threshold to keep collar/shoulders. If isolation
-// was unavailable, a radial vignette fades the (usually busy) background toward white and a
-// stricter threshold keeps the trace from being dominated by it — the kiosk capture oval
-// keeps the face roughly centered, which is all that fallback needs.
-const ISOLATED = { threshold: 235, turdSize: 12, vignette: false };
-const FALLBACK = { threshold: 215, turdSize: 15, vignette: true };
+// Settings per source (tuned on real kiosk selfies):
+// - illustration: an AI illustration (clear contours, flat colours) — the best source, like
+//   an artist inking their own drawing.
+// - isolated: the selfie with the background removed (BackgroundRemovalService); a sensitive
+//   threshold keeps collar/shoulders.
+// - photo: no isolation available; a radial vignette fades the (usually busy) background
+//   toward white and a stricter threshold keeps the trace from being dominated by it — the
+//   kiosk capture oval keeps the face roughly centered, which is all that fallback needs.
+export type SketchSource = 'illustration' | 'isolated' | 'photo';
+const SETTINGS: Record<SketchSource, { threshold: number; turdSize: number; vignette: boolean }> = {
+  illustration: { threshold: 225, turdSize: 12, vignette: false },
+  isolated: { threshold: 235, turdSize: 12, vignette: false },
+  photo: { threshold: 215, turdSize: 15, vignette: true },
+};
 
 const VIGNETTE_SVG = `
   <svg width="${TRACE_SIZE}" height="${TRACE_SIZE}" xmlns="http://www.w3.org/2000/svg">
@@ -35,8 +42,8 @@ const VIGNETTE_SVG = `
 export class SketchService {
   private readonly logger = new Logger(SketchService.name);
 
-  async traceToSvg(image: Buffer, options: { isolated: boolean }): Promise<string | null> {
-    const settings = options.isolated ? ISOLATED : FALLBACK;
+  async traceToSvg(image: Buffer, source: SketchSource): Promise<string | null> {
+    const settings = SETTINGS[source];
     try {
       const [gray, blurredInverted] = await Promise.all([
         sharp(image).resize(TRACE_SIZE, TRACE_SIZE, { fit: 'cover' }).greyscale().toBuffer(),

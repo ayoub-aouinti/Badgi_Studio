@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { KioskService } from './kiosk.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.interface';
+import { BrandingService } from '../branding/branding.service';
 
 describe('KioskService', () => {
   let service: KioskService;
@@ -16,7 +17,7 @@ describe('KioskService', () => {
       kiosk: { findUnique: jest.fn(), update: jest.fn() },
     };
     storage = { put: jest.fn(), get: jest.fn(), getUrl: jest.fn() };
-    service = new KioskService(prisma as unknown as PrismaService, storage);
+    service = new KioskService(prisma as unknown as PrismaService, storage, {} as BrandingService);
   });
 
   describe('pair', () => {

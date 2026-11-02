@@ -7,17 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- Simulated Badgi tables (local dev; real Badgi API takes over later) ---
+// --- Event (single standalone event; no dependency on any external platform) ---
 
 model Event {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  slug      String   @unique
+  slug      String    @unique
   startsAt  DateTime? @map("starts_at")
   endsAt    DateTime? @map("ends_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  attendees          Attendee[]
   studioConfig       StudioConfig?
   kiosks             Kiosk[]
   studioParticipants StudioParticipant[]
@@ -25,37 +24,25 @@ model Event {
   @@map("events")
 }
 
-model Attendee {
-  id           String  @id @default(uuid())
-  eventId      String  @map("event_id")
-  firstName    String  @map("first_name")
-  lastName     String  @map("last_name")
-  email        String?
-  whatsappE164 String? @map("whatsapp_e164")
-  specialty    String?
-  // Opaque token encoded in the participant's badge QR code (never personal data in clear).
-  badgeToken   String  @unique @map("badge_token")
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  event               Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  studioParticipants  StudioParticipant[]
-
-  @@index([eventId])
-  @@map("attendees")
-}
-
 // --- Badgi Studio tables ---
 
 model StudioConfig {
-  id              String  @id @default(uuid())
-  eventId         String  @unique @map("event_id")
-  enabled         Boolean @default(false)
-  frameTemplate   String  @default("default") @map("frame_template")
-  sponsorName     String? @map("sponsor_name")
-  sponsorLogoKey  String? @map("sponsor_logo_key")
-  retentionDays   Int     @default(30) @map("retention_days")
-  wallToken       String  @unique @map("wall_token")
+  id            String  @id @default(uuid())
+  eventId       String  @unique @map("event_id")
+  enabled       Boolean @default(false)
+  // Branding, edited from the admin space and applied to the kiosk, wall and portrait frame.
+  logoKey       String? @map("logo_key")
+  tagline       String?
+  primaryColor  String  @default("#0B6E69") @map("primary_color")
+  accentColor   String  @default("#5FD3C8") @map("accent_color")
+  // none | banner | border | polaroid
+  frameStyle    String  @default("banner") @map("frame_style")
+  frameColor    String  @default("#0E1B2C") @map("frame_color")
+  frameWidth    Int     @default(32) @map("frame_width")
+  showName      Boolean @default(true) @map("show_name")
+  showLogo      Boolean @default(true) @map("show_logo")
+  retentionDays Int     @default(30) @map("retention_days")
+  wallToken     String  @unique @map("wall_token")
 
   event  Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   styles StudioStyle[]
@@ -73,7 +60,7 @@ model StudioStyle {
   sortOrder  Int     @default(0) @map("sort_order")
   active     Boolean @default(true)
 
-  config    StudioConfig    @relation(fields: [configId], references: [id], onDelete: Cascade)
+  config    StudioConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
   portraits Portrait[]
 
   @@index([configId])
@@ -101,24 +88,15 @@ model Kiosk {
   @@map("kiosks")
 }
 
-enum ParticipantSource {
-  BADGE
-  MANUAL
-}
-
 model StudioParticipant {
-  id           String            @id @default(uuid())
-  eventId      String            @map("event_id")
-  attendeeId   String?           @map("attendee_id")
-  firstName    String            @map("first_name")
-  lastName     String            @map("last_name")
+  id           String  @id @default(uuid())
+  eventId      String  @map("event_id")
+  firstName    String  @map("first_name")
+  lastName     String  @map("last_name")
   email        String?
-  whatsappE164 String?           @map("whatsapp_e164")
-  specialty    String?
-  source       ParticipantSource
+  whatsappE164 String? @map("whatsapp_e164")
 
   event           Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  attendee        Attendee?        @relation(fields: [attendeeId], references: [id])
   consents        Consent[]
   captureSessions CaptureSession[]
 
@@ -129,16 +107,15 @@ model StudioParticipant {
 enum ConsentType {
   AI_PROCESSING
   WALL
-  SPONSOR
 }
 
 model Consent {
-  id          String      @id @default(uuid())
-  participantId String    @map("participant_id")
-  type        ConsentType
-  granted     Boolean
-  grantedAt   DateTime    @map("granted_at")
-  textVersion String      @map("text_version")
+  id            String      @id @default(uuid())
+  participantId String      @map("participant_id")
+  type          ConsentType
+  granted       Boolean
+  grantedAt     DateTime    @map("granted_at")
+  textVersion   String      @map("text_version")
 
   participant StudioParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
@@ -218,14 +195,14 @@ enum DeliveryStatus {
 }
 
 model Delivery {
-  id                String         @id @default(uuid())
-  portraitId        String         @map("portrait_id")
+  id                String          @id @default(uuid())
+  portraitId        String          @map("portrait_id")
   channel           DeliveryChannel
   recipient         String
-  status            DeliveryStatus @default(PENDING)
-  providerMessageId String?        @map("provider_message_id")
-  costUsd           Decimal?       @map("cost_usd") @db.Decimal(10, 4)
-  sentAt            DateTime?      @map("sent_at")
+  status            DeliveryStatus  @default(PENDING)
+  providerMessageId String?         @map("provider_message_id")
+  costUsd           Decimal?        @map("cost_usd") @db.Decimal(10, 4)
+  sentAt            DateTime?       @map("sent_at")
   error             String?
 
   portrait Portrait @relation(fields: [portraitId], references: [id], onDelete: Cascade)

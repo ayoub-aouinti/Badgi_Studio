@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: 'badgi Studio',
+        name: 'Portrait Studio',
         short_name: 'Studio',
-        description: 'Borne selfie IA — badgi Studio',
+        description: 'Borne selfie IA — Portrait Studio',
         start_url: '/',
         display: 'fullscreen',
         orientation: 'portrait',

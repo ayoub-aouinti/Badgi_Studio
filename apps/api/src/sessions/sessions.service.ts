@@ -31,7 +31,6 @@ export class SessionsService {
         data: [
           { participantId: participant.id, type: 'AI_PROCESSING', granted: dto.consents.aiProcessing, grantedAt: new Date(), textVersion: CONSENT_TEXT_VERSION },
           { participantId: participant.id, type: 'WALL', granted: dto.consents.wall, grantedAt: new Date(), textVersion: CONSENT_TEXT_VERSION },
-          { participantId: participant.id, type: 'SPONSOR', granted: dto.consents.sponsor, grantedAt: new Date(), textVersion: CONSENT_TEXT_VERSION },
         ],
       }),
     ]);

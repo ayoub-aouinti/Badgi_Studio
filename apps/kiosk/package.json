@@ -12,8 +12,6 @@
   "dependencies": {
     "@badgi-studio/shared": "workspace:*",
     "@tanstack/react-query": "^5.56.2",
-    "@zxing/browser": "^0.1.5",
-    "@zxing/library": "^0.21.3",
     "i18next": "^23.15.1",
     "lucide-react": "^0.441.0",
     "qrcode.react": "^4.0.1",

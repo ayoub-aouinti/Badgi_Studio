@@ -7,7 +7,7 @@ import { useKiosk } from '../state/kiosk-context';
 import { StepHeader } from '../components/StepHeader';
 import { Button } from '../components/Button';
 
-export function ManualEntryScreen() {
+export function EntryScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { dispatch } = useKiosk();
@@ -16,7 +16,6 @@ export function ManualEntryScreen() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
-  const [specialty, setSpecialty] = useState('');
 
   const createParticipant = useMutation({
     mutationFn: api.createParticipant,
@@ -26,8 +25,7 @@ export function ManualEntryScreen() {
     },
   });
 
-  const hasContact = email.trim().length > 0 || whatsapp.trim().length > 0;
-  const canSubmit = firstName.trim().length >= 2 && lastName.trim().length >= 2 && hasContact;
+  const canSubmit = firstName.trim().length >= 2 && lastName.trim().length >= 2;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -37,22 +35,21 @@ export function ManualEntryScreen() {
       lastName: lastName.trim(),
       email: email.trim() || undefined,
       whatsappE164: whatsapp.trim() ? `+216${whatsapp.trim()}` : undefined,
-      specialty: specialty.trim() || undefined,
     });
   }
 
   return (
     <div className="kiosk-shell">
-      <StepHeader current={2} total={4} />
-      <h1 className="mb-6 text-2xl font-bold">{t('manual.title')}</h1>
+      <StepHeader current={1} total={3} onBack={() => navigate('/')} />
+      <h1 className="mb-6 text-2xl font-bold">{t('entry.title')}</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4">
-        <Field label={t('manual.firstName')} value={firstName} onChange={setFirstName} required />
-        <Field label={t('manual.lastName')} value={lastName} onChange={setLastName} required />
-        <Field label={t('manual.email')} value={email} onChange={setEmail} type="email" />
+        <Field label={t('entry.firstName')} value={firstName} onChange={setFirstName} required />
+        <Field label={t('entry.lastName')} value={lastName} onChange={setLastName} required />
+        <Field label={t('entry.email')} value={email} onChange={setEmail} type="email" />
 
         <div>
-          <label className="mb-1 block text-sm font-semibold text-ink-soft">{t('manual.whatsapp')}</label>
+          <label className="mb-1 block text-sm font-semibold text-ink-soft">{t('entry.whatsapp')}</label>
           <div className="flex overflow-hidden rounded-xl border border-border bg-white">
             <span className="flex items-center bg-border-soft px-3 text-sm font-semibold text-ink-soft">
               +216
@@ -66,13 +63,11 @@ export function ManualEntryScreen() {
           </div>
         </div>
 
-        <Field label={t('manual.specialtyOptional')} value={specialty} onChange={setSpecialty} />
-
-        <p className="text-xs text-ink-soft-2">{t('manual.contactNote')}</p>
+        <p className="text-xs text-ink-soft-2">{t('entry.contactNote')}</p>
 
         <div className="mt-auto">
           <Button type="submit" disabled={!canSubmit || createParticipant.isPending}>
-            {t('manual.continue')}
+            {t('entry.continue')}
           </Button>
         </div>
       </form>

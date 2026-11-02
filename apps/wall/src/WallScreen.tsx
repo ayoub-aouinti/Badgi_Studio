@@ -8,12 +8,14 @@ import { WallHeader } from './components/WallHeader';
 import { FeaturedPortrait } from './components/FeaturedPortrait';
 import { PortraitTile } from './components/PortraitTile';
 import { WallFooter } from './components/WallFooter';
+import { useBrandTheme } from './lib/brand-theme';
 
 const GRID_SIZE = 10;
 const MAX_PORTRAITS = GRID_SIZE + 1; // 1 featured + grid
 
 export function WallScreen() {
   const feedQuery = useQuery({ queryKey: ['wall-feed'], queryFn: fetchWallFeed });
+  useBrandTheme(feedQuery.data?.branding);
   const [portraits, setPortraits] = useState<WallFeedPortraitDto[]>([]);
   const [count, setCount] = useState(0);
 
@@ -38,7 +40,6 @@ export function WallScreen() {
             resultUrl: event.resultUrl,
             sketchUrl: event.sketchUrl,
             participantName: event.participantName,
-            specialty: event.specialty,
             createdAt: new Date().toISOString(),
           },
           ...prev.filter((p) => p.portraitId !== event.portraitId),
@@ -79,7 +80,7 @@ export function WallScreen() {
 
   return (
     <div className="flex h-screen w-screen flex-col">
-      <WallHeader eventName={feedQuery.data.eventName} portraitCount={count} />
+      <WallHeader branding={feedQuery.data.branding} portraitCount={count} />
 
       <main className="flex flex-1 items-center gap-16 px-16 py-10">
         {featured ? (
@@ -97,7 +98,7 @@ export function WallScreen() {
         </div>
       </main>
 
-      <WallFooter sponsorName={feedQuery.data.sponsorName} sponsorLogoUrl={feedQuery.data.sponsorLogoUrl} />
+      <WallFooter branding={feedQuery.data.branding} />
     </div>
   );
 }

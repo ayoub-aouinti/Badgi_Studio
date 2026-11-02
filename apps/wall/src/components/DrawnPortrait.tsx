@@ -216,7 +216,7 @@ export function DrawnPortrait({
       <img
         src={finalUrl}
         alt={alt}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-contain"
         style={{ opacity: showFinal ? 1 : 0, transition: `opacity ${FRAME_MS}ms ease` }}
       />
     </div>

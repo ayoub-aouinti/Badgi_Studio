@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 
-// End-to-end happy path: pair a kiosk, scan the demo badge, open a session,
+// End-to-end happy path: pair a kiosk, enter a name, open a session,
 // upload a selfie and wait for the real BullMQ worker (mock AI provider) to
 // produce a ready portrait. Runs against the dev Postgres/Redis containers
 // and the "congres-demo-2026" seed from apps/api/prisma/seed.ts.
@@ -47,7 +47,7 @@ describe('Kiosk flow (e2e)', () => {
   }, 20000);
 
   it(
-    'pairs, scans the demo badge, opens a session and generates a ready portrait',
+    'pairs, enters a name, opens a session and generates a ready portrait',
     async () => {
       const server = app.getHttpServer();
 
@@ -63,22 +63,10 @@ describe('Kiosk flow (e2e)', () => {
       expect(configRes.body.styles.length).toBeGreaterThanOrEqual(3);
       const styleId: string = configRes.body.styles[0].id;
 
-      const badgeRes = await request(server)
-        .post('/kiosk/badge-scan')
-        .set('Authorization', auth)
-        .send({ token: 'badge-demo-amira' })
-        .expect(201);
-      expect(badgeRes.body.firstName).toBe('Amira');
-
       const participantRes = await request(server)
         .post('/kiosk/participants')
         .set('Authorization', auth)
-        .send({
-          attendeeId: badgeRes.body.attendeeId,
-          firstName: badgeRes.body.firstName,
-          lastName: badgeRes.body.lastName,
-          specialty: badgeRes.body.specialty,
-        })
+        .send({ firstName: 'Amira', lastName: 'Ben Ali' })
         .expect(201);
       participantId = participantRes.body.participantId;
 
@@ -87,7 +75,7 @@ describe('Kiosk flow (e2e)', () => {
         .set('Authorization', auth)
         .send({
           participantId,
-          consents: { aiProcessing: true, wall: true, sponsor: false },
+          consents: { aiProcessing: true, wall: true },
         })
         .expect(201);
       sessionId = sessionRes.body.sessionId;

@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { WallFeedResponse } from '@badgi-studio/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { STORAGE_DRIVER, StorageService } from '../storage/storage.interface';
+import { BrandingService } from '../branding/branding.service';
 
 const FEED_SIZE = 11; // 1 featured + up to 10 in the grid (docs/SCREENS.md).
 
@@ -10,6 +11,7 @@ export class WallService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_DRIVER) private readonly storage: StorageService,
+    private readonly branding: BrandingService,
   ) {}
 
   async getFeed(token: string): Promise<WallFeedResponse> {
@@ -19,6 +21,7 @@ export class WallService {
     }
 
     const event = await this.prisma.event.findUniqueOrThrow({ where: { id: config.eventId } });
+    const branding = await this.branding.toDto({ ...config, event });
 
     const onWallFilter = {
       onWall: true,
@@ -43,15 +46,12 @@ export class WallService {
         resultUrl: portrait.resultKey ? await this.storage.getUrl(portrait.resultKey) : undefined,
         sketchUrl: portrait.sketchKey ? await this.storage.getUrl(portrait.sketchKey) : undefined,
         participantName: portrait.session.participant.firstName,
-        specialty: portrait.session.participant.specialty ?? undefined,
         createdAt: portrait.createdAt.toISOString(),
       })),
     );
 
     return {
-      eventName: event.name,
-      sponsorName: config.sponsorName ?? undefined,
-      sponsorLogoUrl: config.sponsorLogoKey ? await this.storage.getUrl(config.sponsorLogoKey) : undefined,
+      branding,
       portraitCount,
       portraits,
     };

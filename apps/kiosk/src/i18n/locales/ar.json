@@ -2,9 +2,7 @@
   "common": {
     "back": "رجوع",
     "or": "أو",
-    "recommended": "موصى به",
     "step": "الخطوة {{current}} من {{total}}",
-    "poweredBy": "برعاية {{sponsor}}",
     "fictionalExample": "مثال توضيحي",
     "loading": "جارٍ التحميل…",
     "error": "حدث خطأ ما",
@@ -21,49 +19,20 @@
     "title": "صورتك بالذكاء الاصطناعي في 30 ثانية.",
     "start": "المس للبدء",
     "example1": "صورة احترافية",
-    "example2": "كاريكاتير حسب التخصص",
-    "example3": "صورة مرسومة"
-  },
-  "identify": {
-    "title": "من أنت؟",
-    "scanCard": "مسح شارة Badgi الخاصة بي",
-    "scanHint": "ضع رمز QR الخاص بشارتك أمام الكاميرا",
-    "manualButton": "إدخال معلوماتي"
-  },
-  "manual": {
-    "title": "معلوماتك",
-    "firstName": "الاسم الأول",
-    "lastName": "اسم العائلة",
-    "email": "البريد الإلكتروني",
-    "whatsapp": "واتساب",
-    "specialty": "التخصص",
-    "specialtyOptional": "التخصص (اختياري)",
-    "contactNote": "البريد الإلكتروني أو واتساب: أحدهما على الأقل مطلوب",
-    "continue": "متابعة"
-  },
-  "badge": {
-    "recognized": "تم التعرف على الشارة",
-    "greeting": "مرحباً {{firstName}}!",
-    "name": "الاسم",
-    "specialty": "التخصص",
-    "institution": "المؤسسة",
-    "email": "البريد الإلكتروني",
-    "badgeLabel": "الشارة",
-    "notMe": "هذا ليس أنا",
-    "confirm": "نعم هذا أنا، متابعة"
+    "example2": "كاريكاتير",
+    "example3": "رسم بقلم الرصاص"
   },
   "style": {
     "title": "اختر أسلوبك",
     "descriptionPro": "صورة احترافية أنيقة بخلفية محايدة",
-    "descriptionCaricature": "كاريكاتير مصور حسب تخصصك",
-    "descriptionPeint": "تأثير مرسوم بألوان دافئة",
+    "descriptionCaricature": "كاريكاتير مصور وملون",
     "consentTitle": "الموافقات",
     "consentAi": "أوافق على معالجة صورتي بالذكاء الاصطناعي (إلزامي)",
     "consentWall": "أوافق على عرض صورتي على جدار المؤتمر",
-    "consentSponsor": "أوافق على مشاركة بياناتي مع الراعي",
     "retentionNote": "يتم حذف بياناتك تلقائياً بعد 30 يوماً.",
     "privacyLink": "سياسة الخصوصية",
-    "takePhoto": "التقاط صورتي"
+    "takePhoto": "التقاط صورتي",
+    "descriptionCrayon": "رسم بقلم الرصاص الأسود على ورق أبيض"
   },
   "capture": {
     "instruction": "ضع وجهك داخل البيضاوي وابتسم",
@@ -91,5 +60,14 @@
     "tryAnotherStyle": "تجربة أسلوب آخر",
     "finish": "إنهاء",
     "whatsappMessage": "مرحباً {{firstName}}، هذه صورتك من {{event}}! النسخة عالية الجودة: {{link}}"
+  },
+  "entry": {
+    "title": "معلوماتك",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "email": "البريد الإلكتروني",
+    "whatsapp": "واتساب",
+    "contactNote": "البريد الإلكتروني أو واتساب (اختياري) لاستلام صورتك",
+    "continue": "متابعة"
   }
 }

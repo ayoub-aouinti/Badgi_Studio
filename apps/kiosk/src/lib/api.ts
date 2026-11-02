@@ -1,5 +1,4 @@
 import type {
-  BadgeScanResponse,
   CreateParticipantRequest,
   CreateParticipantResponse,
   CreatePortraitResponse,
@@ -10,7 +9,7 @@ import type {
 } from '@badgi-studio/shared';
 
 export const API_URL = import.meta.env.VITE_API_URL;
-const DEVICE_TOKEN_KEY = 'badgi-kiosk-device-token';
+const DEVICE_TOKEN_KEY = 'studio-kiosk-device-token';
 
 export function getDeviceToken(): string | null {
   return localStorage.getItem(DEVICE_TOKEN_KEY);
@@ -59,12 +58,6 @@ export const api = {
     }),
 
   getConfig: () => request<KioskConfigDto>('/kiosk/config'),
-
-  badgeScan: (token: string) =>
-    request<BadgeScanResponse>('/kiosk/badge-scan', {
-      method: 'POST',
-      body: JSON.stringify({ token }),
-    }),
 
   createParticipant: (dto: CreateParticipantRequest) =>
     request<CreateParticipantResponse>('/kiosk/participants', {

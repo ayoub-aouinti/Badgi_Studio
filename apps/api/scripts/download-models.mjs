@@ -1,6 +1,9 @@
 // Downloads the free/local ML models used by the API (not committed to git).
 // u2netp: U²-Net portable salient-object segmentation, Apache-2.0
 // (https://github.com/xuebinqin/U-2-Net), ONNX export hosted by the rembg project.
+// face_paint_512_v2: AnimeGAN2 "face paint" portrait model from bryandlee/animegan2-pytorch
+// (repo licensed MIT), ONNX export hosted on Hugging Face (akhaliq/AnimeGANv2-ONNX). Used by
+// AI_PROVIDER=animegan — confirm the weights' licence before commercial use.
 import { createWriteStream, existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +17,10 @@ const MODELS = [
   {
     file: 'u2netp.onnx',
     url: 'https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx',
+  },
+  {
+    file: 'face_paint_512_v2_0.onnx',
+    url: 'https://huggingface.co/akhaliq/AnimeGANv2-ONNX/resolve/main/face_paint_512_v2_0.onnx',
   },
 ];
 

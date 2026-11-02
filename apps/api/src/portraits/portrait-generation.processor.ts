@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AI_PROVIDER, AiProvider } from '../ai/ai-provider.interface';
 import { STORAGE_DRIVER, StorageService } from '../storage/storage.interface';
 import { FrameService } from '../frame/frame.service';
+import { BrandingService } from '../branding/branding.service';
 import { SketchService } from '../sketch/sketch.service';
 import { BackgroundRemovalService } from '../segmentation/background-removal.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -26,6 +27,7 @@ export class PortraitGenerationProcessor extends WorkerHost {
     @Inject(AI_PROVIDER) private readonly aiProvider: AiProvider,
     @Inject(STORAGE_DRIVER) private readonly storage: StorageService,
     private readonly frameService: FrameService,
+    private readonly branding: BrandingService,
     private readonly sketchService: SketchService,
     private readonly backgroundRemoval: BackgroundRemovalService,
     private readonly realtime: RealtimeGateway,
@@ -49,7 +51,6 @@ export class PortraitGenerationProcessor extends WorkerHost {
 
     const { session } = portrait;
     const event = session.kiosk.event;
-    const studioConfig = event.studioConfig;
 
     await this.setStatus(portrait.id, 'MODERATING');
     this.emitProgress(portrait.id, session.id, 'sketch');
@@ -66,19 +67,22 @@ export class PortraitGenerationProcessor extends WorkerHost {
 
     this.emitProgress(portrait.id, session.id, 'color');
     const resultKey = `portraits/${session.id}/${randomUUID()}-result.jpg`;
-    await this.storage.put(resultKey, generated, 'image/jpeg');
+    await this.storage.put(resultKey, generated.image, 'image/jpeg');
 
     const [framed, sketchSvg] = await Promise.all([
-      this.frameService.apply(generated, {
-        participantName: `${session.participant.firstName} ${session.participant.lastName}`,
-        eventName: event.name,
-        sponsorName: studioConfig?.sponsorName ?? undefined,
-      }),
-      // Traced from the cutout, not the AI-styled `generated` image: the mock provider
-      // applies its own vignette/median/tint per style, and stacking our sketch vignette on
-      // top of that washed out the face in testing. Same crop as `generated` (both a
-      // centered square "cover" of the same image), so the color pass lines up.
-      this.sketchService.traceToSvg(subject.image, { isolated: subject.isolated }),
+      this.branding
+        .frameOptions(
+          { ...event.studioConfig!, event },
+          `${session.participant.firstName} ${session.participant.lastName}`,
+        )
+        .then((options) => this.frameService.apply(generated.image, options)),
+      // An illustration is traced directly (clean contours, like inking your own drawing).
+      // A retouched photo is traced from the cutout instead: the mock grading adds its own
+      // vignette/median/tint, which washed out the face in testing. Either way the source is
+      // a centered square of the same framing as `generated`, so the colour pass lines up.
+      generated.illustration
+        ? this.sketchService.traceToSvg(generated.image, 'illustration')
+        : this.sketchService.traceToSvg(subject.image, subject.isolated ? 'isolated' : 'photo'),
     ]);
     this.emitProgress(portrait.id, session.id, 'frame');
     const framedKey = `portraits/${session.id}/${randomUUID()}-framed.jpg`;
@@ -125,7 +129,6 @@ export class PortraitGenerationProcessor extends WorkerHost {
         resultUrl,
         sketchUrl,
         participantName: session.participant.firstName,
-        specialty: session.participant.specialty ?? undefined,
       });
     }
   }

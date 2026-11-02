@@ -1,8 +1,10 @@
-# Badgi Studio — instructions pour Claude Code
+# Portrait Studio — instructions pour Claude Code
 
-Badgi Studio est un module de la plateforme Badgi (badgi.net, gestion de congrès médicaux en Tunisie).
-Une **borne tablette** transforme le selfie d'un participant en **portrait IA**, l'affiche sur le **mur du congrès**
-(écran TV) et le lui envoie (email, WhatsApp, QR de téléchargement).
+Portrait Studio est une application **autonome** (aucun lien avec une plateforme externe) : une **borne tablette**
+transforme le selfie d'un participant en **portrait** (professionnel, caricature ou crayon noir), l'affiche sur le
+**mur** (écran TV) et le lui envoie (email, WhatsApp, QR de téléchargement).
+L'organisateur configure le **branding** (nom, slogan, logo, couleurs, cadre du portrait) dans l'espace admin
+(`apps/dashboard`, mot de passe `ADMIN_PASSWORD`).
 
 Lire avant de coder : `docs/SPEC.md` (fonctionnel + données + API) et `docs/SCREENS.md` (écrans et design).
 

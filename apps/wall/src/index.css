@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --brand: 11 110 105;
+    --brand-light: 221 239 236;
+    --brand-accent: 95 211 200;
+  }
+
   html,
   body,
   #root {

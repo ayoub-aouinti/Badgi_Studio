@@ -12,7 +12,7 @@ import { Button } from '../components/Button';
 function descriptionKeyFor(name: string): string {
   const n = name.toLowerCase();
   if (n.includes('caricature')) return 'style.descriptionCaricature';
-  if (n.includes('peint')) return 'style.descriptionPeint';
+  if (n.includes('crayon')) return 'style.descriptionCrayon';
   return 'style.descriptionPro';
 }
 
@@ -24,10 +24,9 @@ export function StyleConsentScreen() {
   const [styleId, setStyleId] = useState<string | null>(state.styleId);
   const [aiProcessing, setAiProcessing] = useState(false);
   const [wall, setWall] = useState(false);
-  const [sponsor, setSponsor] = useState(false);
 
   useEffect(() => {
-    if (!state.participant) navigate('/identify', { replace: true });
+    if (!state.participant) navigate('/entry', { replace: true });
   }, [state.participant, navigate]);
 
   const createSession = useMutation({
@@ -47,7 +46,7 @@ export function StyleConsentScreen() {
 
   return (
     <div className="kiosk-shell">
-      <StepHeader current={3} total={4} />
+      <StepHeader current={2} total={3} />
       <h1 className="mb-4 text-2xl font-bold">{t('style.title')}</h1>
 
       <div className="mb-6 flex flex-col gap-3">
@@ -66,7 +65,6 @@ export function StyleConsentScreen() {
       <div className="mb-4 flex flex-col gap-2">
         <ConsentCheckbox label={t('style.consentAi')} checked={aiProcessing} onChange={setAiProcessing} required />
         <ConsentCheckbox label={t('style.consentWall')} checked={wall} onChange={setWall} />
-        <ConsentCheckbox label={t('style.consentSponsor')} checked={sponsor} onChange={setSponsor} />
       </div>
 
       <p className="mb-6 text-xs text-ink-soft-2">{t('style.retentionNote')}</p>
@@ -78,7 +76,7 @@ export function StyleConsentScreen() {
             styleId &&
             createSession.mutate({
               participantId: state.participant!.id,
-              consents: { aiProcessing, wall, sponsor },
+              consents: { aiProcessing, wall },
             })
           }
         >

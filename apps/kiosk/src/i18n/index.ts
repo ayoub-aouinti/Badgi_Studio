@@ -8,7 +8,7 @@ export const RTL_LANGUAGES = ['ar'];
 export const SUPPORTED_LANGUAGES = ['fr', 'en', 'ar'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
-const STORAGE_KEY = 'badgi-kiosk-lang';
+const STORAGE_KEY = 'studio-kiosk-lang';
 
 function storedLanguage(): SupportedLanguage {
   const stored = localStorage.getItem(STORAGE_KEY);

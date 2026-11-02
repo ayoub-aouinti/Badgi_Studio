@@ -1,16 +1,17 @@
 import { Camera } from 'lucide-react';
+import type { BrandingDto } from '@badgi-studio/shared';
 
 interface WallHeaderProps {
-  eventName: string;
+  branding: BrandingDto;
   portraitCount: number;
 }
 
-export function WallHeader({ eventName, portraitCount }: WallHeaderProps) {
+export function WallHeader({ branding, portraitCount }: WallHeaderProps) {
   return (
     <header className="flex items-center justify-between px-16 pt-12">
       <div>
-        <h1 className="text-4xl font-extrabold">Mur des participants</h1>
-        <p className="mt-1 text-lg font-semibold text-teal-vivid">{eventName}</p>
+        <h1 className="text-4xl font-extrabold">{branding.eventName}</h1>
+        <p className="mt-1 text-lg font-semibold text-teal-vivid">{branding.tagline ?? 'Mur des participants'}</p>
       </div>
 
       <div className="flex items-center gap-8">
@@ -20,7 +21,7 @@ export function WallHeader({ eventName, portraitCount }: WallHeaderProps) {
         </div>
         <div className="flex items-center gap-2 rounded-2xl border border-teal-vivid/40 bg-teal/20 px-5 py-3">
           <Camera size={20} className="text-teal-vivid" />
-          <span className="text-sm font-semibold">Votre portrait ? Borne Studio · Hall B</span>
+          <span className="text-sm font-semibold">Votre portrait ? Rendez-vous à la borne</span>
         </div>
       </div>
     </header>

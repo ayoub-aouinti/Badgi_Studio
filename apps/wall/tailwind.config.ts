@@ -14,9 +14,9 @@ export default {
         border: '#C9D2D0',
         'border-soft': '#E3E8E7',
         teal: {
-          DEFAULT: '#0B6E69',
-          light: '#DDEFEC',
-          vivid: '#5FD3C8',
+          DEFAULT: 'rgb(var(--brand) / <alpha-value>)',
+          light: 'rgb(var(--brand-light) / <alpha-value>)',
+          vivid: 'rgb(var(--brand-accent) / <alpha-value>)',
         },
         coral: {
           DEFAULT: '#C4502F',

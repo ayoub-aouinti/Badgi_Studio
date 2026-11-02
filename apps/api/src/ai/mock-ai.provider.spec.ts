@@ -23,6 +23,10 @@ async function tinySelfie(): Promise<Buffer> {
     .toBuffer();
 }
 
+// sharp renders 1024px images here; under a loaded machine with suites in parallel this has
+// exceeded Jest's default 5 s.
+jest.setTimeout(20000);
+
 describe('MockAiProvider', () => {
   const provider = new MockAiProvider();
 
@@ -31,23 +35,24 @@ describe('MockAiProvider', () => {
 
     const result = await provider.generate(selfie, fakeStyle('Portrait professionnel'));
 
-    expect(Buffer.isBuffer(result)).toBe(true);
-    const meta = await sharp(result).metadata();
+    expect(Buffer.isBuffer(result.image)).toBe(true);
+    expect(result.illustration).toBe(false);
+    const meta = await sharp(result.image).metadata();
     expect(meta.format).toBe('jpeg');
-    expect(result.equals(selfie)).toBe(false);
+    expect(result.image.equals(selfie)).toBe(false);
   });
 
-  it('applies a different pipeline per style (caricature vs painted vs pro)', async () => {
+  it('applies a different pipeline per style (caricature vs pencil vs pro)', async () => {
     const selfie = await tinySelfie();
 
-    const [pro, caricature, peint] = await Promise.all([
+    const [pro, caricature, pencil] = await Promise.all([
       provider.generate(selfie, fakeStyle('Portrait professionnel')),
       provider.generate(selfie, fakeStyle('Caricature spécialité')),
-      provider.generate(selfie, fakeStyle('Portrait peint')),
+      provider.generate(selfie, fakeStyle('Crayon noir')),
     ]);
 
-    expect(pro.equals(caricature)).toBe(false);
-    expect(pro.equals(peint)).toBe(false);
-    expect(caricature.equals(peint)).toBe(false);
+    expect(pro.image.equals(caricature.image)).toBe(false);
+    expect(pro.image.equals(pencil.image)).toBe(false);
+    expect(caricature.image.equals(pencil.image)).toBe(false);
   });
 });

@@ -10,6 +10,8 @@ import { KioskModule } from './kiosk/kiosk.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { PortraitsModule } from './portraits/portraits.module';
 import { WallModule } from './wall/wall.module';
+import { BrandingModule } from './branding/branding.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { WallModule } from './wall/wall.module';
     }),
     PrismaModule,
     StorageModule,
+    BrandingModule,
+    AdminModule,
     AiProviderModule,
     QueueModule,
     RealtimeModule,
