@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Kiosk } from '@prisma/client';
 import { KioskAuthGuard } from '../common/guards/kiosk-auth.guard';
@@ -29,5 +29,12 @@ export class KioskController {
   @Post('participants')
   createParticipant(@CurrentKiosk() kiosk: Kiosk, @Body() dto: CreateParticipantDto) {
     return this.kioskService.createParticipant(kiosk, dto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(KioskAuthGuard)
+  @Post('portraits/:portraitId/print')
+  recordPrint(@CurrentKiosk() kiosk: Kiosk, @Param('portraitId', ParseUUIDPipe) portraitId: string) {
+    return this.kioskService.recordPrint(kiosk, portraitId);
   }
 }

@@ -59,6 +59,9 @@ export const api = {
 
   getConfig: () => request<KioskConfigDto>('/kiosk/config'),
 
+  recordPrint: (portraitId: string) =>
+    request<{ deliveryId: string }>(`/kiosk/portraits/${portraitId}/print`, { method: 'POST' }),
+
   createParticipant: (dto: CreateParticipantRequest) =>
     request<CreateParticipantResponse>('/kiosk/participants', {
       method: 'POST',

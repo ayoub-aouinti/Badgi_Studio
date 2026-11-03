@@ -38,6 +38,11 @@ export function PortraitCard({ portrait, children }: { portrait: AdminPortraitDt
           {portrait.styleName} · {new Date(portrait.createdAt).toLocaleString('fr-FR')}
         </p>
         {portrait.moderationReason && <p className="mt-1 text-xs text-red-600">{portrait.moderationReason}</p>}
+        {portrait.videoUrl && (
+          <a href={portrait.videoUrl} target="_blank" rel="noreferrer" className="text-xs text-slate-600 underline">
+            Vidéo du dessin
+          </a>
+        )}
       </div>
       {children}
     </article>

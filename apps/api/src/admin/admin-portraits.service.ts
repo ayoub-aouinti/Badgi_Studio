@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { AdminPortraitDto, ModerationStatus, PortraitStatus, UpdateAdminPortraitRequest } from '@badgi-studio/shared';
 import { Prisma } from '@prisma/client';
+import archiver from 'archiver';
 import { PrismaService } from '../prisma/prisma.service';
 import { STORAGE_DRIVER, StorageService } from '../storage/storage.interface';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -98,6 +99,31 @@ export class AdminPortraitsService {
     return this.toDto(updated);
   }
 
+  // Every ready, not-yet-purged framed portrait of the event as one ZIP (organiser archive).
+  async writeZip(eventId: string, output: NodeJS.WritableStream): Promise<void> {
+    const portraits = await this.prisma.portrait.findMany({
+      where: { session: { kiosk: { eventId } }, status: 'READY', purgedAt: null, framedKey: { not: null } },
+      orderBy: { createdAt: 'asc' },
+      select: { publicCode: true, framedKey: true, session: { select: { participant: true } } },
+    });
+    const archive = archiver('zip', { store: true }); // JPEGs are already compressed.
+    const done = new Promise<void>((resolve, reject) => {
+      archive.on('error', reject);
+      output.on('finish', resolve);
+      output.on('close', resolve);
+    });
+    archive.pipe(output);
+    const safe = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '-');
+    for (const portrait of portraits) {
+      const { firstName, lastName } = portrait.session.participant;
+      archive.append(await this.storage.get(portrait.framedKey!), {
+        name: `${safe(lastName)}-${safe(firstName)}-${portrait.publicCode}.jpg`,
+      });
+    }
+    await archive.finalize();
+    await done;
+  }
+
   private async find(eventId: string, id: string): Promise<PortraitWithRelations> {
     const portrait = await this.prisma.portrait.findFirst({
       where: { id, session: { kiosk: { eventId } } },
@@ -120,6 +146,7 @@ export class AdminPortraitsService {
       participantName: `${participant.firstName} ${participant.lastName}`,
       styleName: portrait.style.name,
       imageUrl: portrait.framedKey ? await this.storage.getUrl(portrait.framedKey) : undefined,
+      videoUrl: portrait.videoKey ? await this.storage.getUrl(portrait.videoKey) : undefined,
       onWall: portrait.onWall,
       pinned: portrait.pinned,
       wallConsent: this.hasWallConsent(portrait),

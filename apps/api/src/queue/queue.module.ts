@@ -5,6 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 export const PORTRAIT_GENERATION_QUEUE = 'portrait-generation';
 export const DELIVERY_QUEUE = 'delivery';
 export const MAINTENANCE_QUEUE = 'maintenance';
+// Slow media renders (drawing video, poster): never delay the portrait itself.
+export const MEDIA_QUEUE = 'media';
 
 @Global()
 @Module({
@@ -39,6 +41,16 @@ export const MAINTENANCE_QUEUE = 'maintenance';
         backoff: { type: 'fixed', delay: 5000 },
         removeOnComplete: true,
         removeOnFail: 100,
+      },
+    }),
+    BullModule.registerQueue({
+      name: MEDIA_QUEUE,
+      defaultJobOptions: {
+        attempts: 2,
+        backoff: { type: 'fixed', delay: 5000 },
+        // Kept for a day: the dashboard polls poster jobs by id.
+        removeOnComplete: { age: 24 * 3600 },
+        removeOnFail: { age: 24 * 3600 },
       },
     }),
     BullModule.registerQueue({

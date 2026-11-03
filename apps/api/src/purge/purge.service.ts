@@ -47,7 +47,7 @@ export class PurgeService {
   }
 
   private async purgePortrait(portrait: Portrait & { session: { kiosk: { eventId: string } } }, now: Date) {
-    const keys = [portrait.selfieKey, portrait.resultKey, portrait.framedKey, portrait.sketchKey];
+    const keys = [portrait.selfieKey, portrait.resultKey, portrait.framedKey, portrait.sketchKey, portrait.videoKey];
     // Files first: if a delete fails the portrait stays due and the next run retries it.
     for (const key of keys) {
       if (key) await this.storage.delete(key);
@@ -61,6 +61,7 @@ export class PurgeService {
           resultKey: null,
           framedKey: null,
           sketchKey: null,
+          videoKey: null,
           onWall: false,
           pinned: false,
           purgedAt: now,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { UpdateEventRequest } from '@badgi-studio/shared';
-import { api, wallLink } from '../lib/api';
+import { api, galleryLink, wallLink } from '../lib/api';
 import { useEvent } from '../lib/event-context';
 
 const toDateInput = (iso?: string) => (iso ? iso.slice(0, 10) : '');
@@ -14,6 +14,8 @@ export function SettingsPage() {
     endsAt: toDateInput(event.endsAt),
     retentionDays: event.retentionDays,
     preModeration: event.preModeration,
+    printEnabled: event.printEnabled,
+    galleryEnabled: event.galleryEnabled,
   });
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -41,6 +43,8 @@ export function SettingsPage() {
       endsAt: fromDateInput(draft.endsAt),
       retentionDays: draft.retentionDays,
       preModeration: draft.preModeration,
+      printEnabled: draft.printEnabled,
+      galleryEnabled: draft.galleryEnabled,
     };
     return run(() => api.updateEvent(event.id, dto), 'Paramètres enregistrés');
   };
@@ -102,6 +106,35 @@ export function SettingsPage() {
             </span>
           </span>
         </label>
+        <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={draft.printEnabled}
+            onChange={(e) => setDraft({ ...draft, printEnabled: e.target.checked })}
+          />
+          <span>
+            <span className="block font-semibold">Impression à la borne</span>
+            <span className="text-sm text-slate-500">
+              Affiche le bouton « Imprimer » (format photo 10×15). Une imprimante doit être configurée sur la tablette.
+            </span>
+          </span>
+        </label>
+        <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={draft.galleryEnabled}
+            onChange={(e) => setDraft({ ...draft, galleryEnabled: e.target.checked })}
+          />
+          <span>
+            <span className="block font-semibold">Galerie en ligne</span>
+            <span className="text-sm text-slate-500">
+              Page publique avec les portraits du mur (participants ayant accepté l&apos;affichage), accessible par
+              un lien secret.
+            </span>
+          </span>
+        </label>
         <button
           onClick={save}
           disabled={busy}
@@ -126,6 +159,28 @@ export function SettingsPage() {
             Ouvrir
           </a>
         </div>
+        {event.galleryEnabled && (
+          <div className="border-t border-slate-200 pt-4">
+            <h3 className="mb-1 font-bold">Galerie en ligne</h3>
+            <p className="mb-2 text-sm text-slate-500">À partager avec les participants (email, QR, réseaux).</p>
+            <div className="flex gap-2">
+              <input
+                className="field-input font-mono text-xs"
+                value={galleryLink(event)}
+                readOnly
+                onFocus={(e) => e.target.select()}
+              />
+              <a
+                href={galleryLink(event)}
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold"
+              >
+                Ouvrir
+              </a>
+            </div>
+          </div>
+        )}
         {confirmToken ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm">
             <p className="mb-2">L&apos;ancien lien cessera de fonctionner : l&apos;écran du mur devra ouvrir le nouveau.</p>

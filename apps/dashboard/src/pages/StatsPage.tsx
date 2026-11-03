@@ -32,6 +32,8 @@ export function StatsPage() {
           note={stats.portraitsFailed ? `${stats.portraitsFailed} génération(s) en échec` : undefined}
         />
         <Tile label="Bornes en ligne" value={`${stats.kiosksOnline} / ${stats.kiosksTotal}`} />
+        <Tile label="Impressions" value={stats.prints} />
+        <Tile label="Vidéos du dessin" value={stats.videos} />
       </div>
 
       <section className="card">

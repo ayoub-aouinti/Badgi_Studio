@@ -1,5 +1,5 @@
 import { IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, Length, Max, MaxLength, Min, ValidateIf } from 'class-validator';
-import type { ModerationStatus } from '@badgi-studio/shared';
+import type { ModerationStatus, PosterFormat } from '@badgi-studio/shared';
 
 export class LoginDto {
   @IsString()
@@ -50,6 +50,19 @@ export class UpdateEventDto {
   @IsOptional()
   @IsBoolean()
   preModeration?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  printEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  galleryEnabled?: boolean;
+}
+
+export class CreatePosterDto {
+  @IsIn(['A3', 'A2', 'A1', 'A0'])
+  format!: PosterFormat;
 }
 
 export class ToggleStyleDto {

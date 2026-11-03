@@ -71,7 +71,13 @@ export class AdminEventsService {
     });
     await this.prisma.studioConfig.update({
       where: { id: event.studioConfig!.id },
-      data: { enabled: dto.enabled, retentionDays: dto.retentionDays, preModeration: dto.preModeration },
+      data: {
+        enabled: dto.enabled,
+        retentionDays: dto.retentionDays,
+        preModeration: dto.preModeration,
+        printEnabled: dto.printEnabled,
+        galleryEnabled: dto.galleryEnabled,
+      },
     });
     return this.get(eventId);
   }
@@ -111,6 +117,9 @@ export class AdminEventsService {
       enabled: config.enabled,
       retentionDays: config.retentionDays,
       preModeration: config.preModeration,
+      printEnabled: config.printEnabled,
+      galleryEnabled: config.galleryEnabled,
+      galleryToken: config.galleryToken,
       wallToken: config.wallToken,
       portraitCount,
       pendingCount,

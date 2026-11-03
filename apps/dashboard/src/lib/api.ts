@@ -8,6 +8,8 @@ import type {
   CreateEventRequest,
   EventStatsDto,
   ModerationStatus,
+  PosterFormat,
+  PosterJobDto,
   UpdateAdminPortraitRequest,
   UpdateEventRequest,
 } from '@badgi-studio/shared';
@@ -36,6 +38,11 @@ export class UnauthorizedError extends Error {}
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+// Public gallery page served by the API (/g/:galleryToken).
+export function galleryLink(event: AdminEventDto): string {
+  return `${API_URL.replace(/\/+$/, '')}/g/${event.galleryToken}`;
+}
 
 export function wallLink(event: AdminEventDto): string {
   return `${WALL_URL.replace(/\/+$/, '')}/?token=${encodeURIComponent(event.wallToken)}`;
@@ -108,6 +115,13 @@ export const api = {
     json<AdminPortraitDto[]>(`${ev(eventId)}/portraits${moderation ? `?moderation=${moderation}` : ''}`),
   updatePortrait: (eventId: string, id: string, dto: UpdateAdminPortraitRequest) =>
     json<AdminPortraitDto>(`${ev(eventId)}/portraits/${id}`, send('PATCH', dto)),
+
+  // The ZIP needs the auth header: fetched as a blob, then saved through an object URL.
+  downloadPortraitsZip: async (eventId: string): Promise<Blob> => (await request(`${ev(eventId)}/portraits.zip`)).blob(),
+
+  // --- Poster ---
+  createPoster: (eventId: string, format: PosterFormat) => json<PosterJobDto>(`${ev(eventId)}/poster`, send('POST', { format })),
+  getPoster: (eventId: string, jobId: string) => json<PosterJobDto>(`${ev(eventId)}/poster/${jobId}`),
 
   // --- Kiosks ---
   getKiosks: (eventId: string) => json<AdminKioskDto[]>(`${ev(eventId)}/kiosks`),

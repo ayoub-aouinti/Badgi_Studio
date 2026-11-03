@@ -7,11 +7,12 @@ import { ModerationPage } from './pages/ModerationPage';
 import { PortraitsPage } from './pages/PortraitsPage';
 import { ParticipantsPage } from './pages/ParticipantsPage';
 import { KiosksPage } from './pages/KiosksPage';
+import { ExportsPage } from './pages/ExportsPage';
 import { BrandingPage } from './pages/BrandingPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NewEventForm } from './pages/NewEventForm';
 
-type Page = 'stats' | 'moderation' | 'portraits' | 'participants' | 'kiosks' | 'branding' | 'settings';
+type Page = 'stats' | 'moderation' | 'portraits' | 'participants' | 'kiosks' | 'exports' | 'branding' | 'settings';
 
 const PAGES: { value: Page; label: string }[] = [
   { value: 'stats', label: 'Statistiques' },
@@ -19,6 +20,7 @@ const PAGES: { value: Page; label: string }[] = [
   { value: 'portraits', label: 'Portraits' },
   { value: 'participants', label: 'Participants' },
   { value: 'kiosks', label: 'Bornes' },
+  { value: 'exports', label: 'Exports' },
   { value: 'branding', label: 'Branding & styles' },
   { value: 'settings', label: 'Paramètres' },
 ];
@@ -190,6 +192,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
             {page === 'portraits' && <PortraitsPage />}
             {page === 'participants' && <ParticipantsPage />}
             {page === 'kiosks' && <KiosksPage />}
+            {page === 'exports' && <ExportsPage />}
             {page === 'branding' && <BrandingPage />}
             {page === 'settings' && <SettingsPage />}
           </div>

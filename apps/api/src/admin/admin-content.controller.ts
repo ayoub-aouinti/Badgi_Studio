@@ -30,8 +30,10 @@ import { AdminGuard } from './admin.guard';
 import { AdminPortraitsService } from './admin-portraits.service';
 import { AdminKiosksService } from './admin-kiosks.service';
 import { AdminParticipantsService } from './admin-participants.service';
+import { PosterService } from '../poster/poster.service';
 import {
   CreateKioskDto,
+  CreatePosterDto,
   ListParticipantsQuery,
   ListPortraitsQuery,
   ToggleStyleDto,
@@ -50,6 +52,7 @@ export class AdminContentController {
     private readonly portraits: AdminPortraitsService,
     private readonly kiosks: AdminKiosksService,
     private readonly participants: AdminParticipantsService,
+    private readonly poster: PosterService,
   ) {}
 
   // --- Branding & styles ---
@@ -111,6 +114,25 @@ export class AdminContentController {
   @Get('portraits')
   listPortraits(@Param('eventId', ParseUUIDPipe) eventId: string, @Query() query: ListPortraitsQuery) {
     return this.portraits.list(eventId, query);
+  }
+
+  @Get('portraits.zip')
+  async downloadPortraits(@Param('eventId', ParseUUIDPipe) eventId: string, @Res() res: Response) {
+    await this.branding.getConfig(eventId);
+    res.attachment('portraits.zip').type('application/zip');
+    await this.portraits.writeZip(eventId, res);
+  }
+
+  // --- Printable poster (rendered in the background, polled by job id) ---
+
+  @Post('poster')
+  createPoster(@Param('eventId', ParseUUIDPipe) eventId: string, @Body() dto: CreatePosterDto) {
+    return this.poster.enqueue(eventId, dto.format);
+  }
+
+  @Get('poster/:jobId')
+  posterStatus(@Param('eventId', ParseUUIDPipe) eventId: string, @Param('jobId') jobId: string) {
+    return this.poster.status(eventId, jobId);
   }
 
   @Patch('portraits/:portraitId')

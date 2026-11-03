@@ -62,6 +62,7 @@
     "scanDownload": "Scan to download in HD",
     "scanWhatsapp": "Scan to receive on WhatsApp",
     "print": "Print",
+    "printed": "Printing started",
     "tryAnotherStyle": "Try another style",
     "finish": "Finish",
     "whatsappMessage": "Hello {{firstName}}, here is your portrait from {{event}}! HD version: {{link}}"

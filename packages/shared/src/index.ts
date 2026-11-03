@@ -1,5 +1,7 @@
 // Shared types and DTOs for Portrait Studio apps (api, kiosk, wall, dashboard).
 
+export * from './drawing';
+
 export type PortraitStatus =
   | 'QUEUED'
   | 'MODERATING'
@@ -49,6 +51,8 @@ export interface BrandingDto {
 
 export interface KioskConfigDto {
   branding: BrandingDto;
+  // A printer is attached to the kiosk for this event: show the "Imprimer" button.
+  printEnabled: boolean;
   languages: string[];
   styles: KioskStyleDto[];
 }
@@ -162,6 +166,8 @@ export interface AdminPortraitDto {
   styleName: string;
   // Framed portrait; undefined until ready, and again once purged.
   imageUrl?: string;
+  // MP4 replay of the live drawing, once rendered.
+  videoUrl?: string;
   onWall: boolean;
   pinned: boolean;
   // Only a participant who consented can be (re)shown on the wall.
@@ -196,6 +202,10 @@ export interface AdminEventDto {
   enabled: boolean;
   retentionDays: number;
   preModeration: boolean;
+  printEnabled: boolean;
+  // Public online gallery at /g/:galleryToken (portraits shown on the wall only).
+  galleryEnabled: boolean;
+  galleryToken: string;
   // Secret in the wall screen URL (apps/wall ?token=...).
   wallToken: string;
   portraitCount: number;
@@ -216,6 +226,8 @@ export interface UpdateEventRequest {
   enabled?: boolean;
   retentionDays?: number;
   preModeration?: boolean;
+  printEnabled?: boolean;
+  galleryEnabled?: boolean;
 }
 
 export interface AdminKioskDto {
@@ -252,10 +264,24 @@ export interface EventStatsDto {
   onWall: number;
   emailsSent: number;
   emailsFailed: number;
+  prints: number;
+  videos: number;
   aiCostUsd: number;
   kiosksOnline: number;
   kiosksTotal: number;
   byStyle: { styleId: string; name: string; preset: StylePreset; count: number }[];
   // Ready portraits per hour (ISO start of the hour), oldest first.
   byHour: { hour: string; count: number }[];
+}
+
+// Printable wall poster (apps/api PosterService), rendered in the background.
+export type PosterFormat = 'A3' | 'A2' | 'A1' | 'A0';
+
+export interface PosterJobDto {
+  jobId: string;
+  status: 'waiting' | 'active' | 'completed' | 'failed';
+  count?: number;
+  imageUrl?: string;
+  pdfUrl?: string;
+  error?: string;
 }

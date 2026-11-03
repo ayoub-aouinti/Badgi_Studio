@@ -211,6 +211,63 @@ describe('Kiosk flow (e2e)', () => {
       .expect(200);
     expect(participantsRes.body).toHaveLength(1);
   });
+
+  it(
+    'renders the drawing video and the poster, publishes the gallery, exports the ZIP, records prints',
+    async () => {
+      const approved = await prisma.portrait.findFirstOrThrow({
+        where: { session: { kiosk: { eventId } }, moderation: 'APPROVED' },
+      });
+
+      // Drawing video: rendered in the background, streamed with byte ranges (iOS Safari).
+      await waitFor(async () => {
+        const portrait = await prisma.portrait.findUniqueOrThrow({ where: { id: approved.id } });
+        return portrait.videoKey ? portrait : null;
+      }, 60000);
+      const videoRes = await request(server).get(`/p/${approved.publicCode}/video`).set('Range', 'bytes=0-99').expect(206);
+      expect(videoRes.headers['content-type']).toContain('video/mp4');
+      expect(videoRes.headers['content-range']).toMatch(/^bytes 0-99\/\d+$/);
+
+      // Online gallery: off by default, then lists the wall portraits.
+      const eventRes = await request(server).get(admin('')).set('Authorization', adminAuth).expect(200);
+      await request(server).get(`/g/${eventRes.body.galleryToken}`).expect(404);
+      await request(server).patch(admin('')).set('Authorization', adminAuth).send({ galleryEnabled: true }).expect(200);
+      const galleryRes = await request(server).get(`/g/${eventRes.body.galleryToken}`).expect(200);
+      expect(galleryRes.text).toContain(approved.publicCode);
+
+      // Kiosk printing: refused until the organiser enables it, then counted.
+      await request(server).post(`/kiosk/portraits/${approved.id}/print`).set('Authorization', kioskAuth).expect(403);
+      await request(server).patch(admin('')).set('Authorization', adminAuth).send({ printEnabled: true }).expect(200);
+      const configRes = await request(server).get('/kiosk/config').set('Authorization', kioskAuth).expect(200);
+      expect(configRes.body.printEnabled).toBe(true);
+      await request(server).post(`/kiosk/portraits/${approved.id}/print`).set('Authorization', kioskAuth).expect(201);
+      const statsRes = await request(server).get(admin('/stats')).set('Authorization', adminAuth).expect(200);
+      expect(statsRes.body).toEqual(expect.objectContaining({ prints: 1, videos: 1 }));
+
+      // Organiser archive.
+      const zipRes = await request(server)
+        .get(admin('/portraits.zip'))
+        .set('Authorization', adminAuth)
+        .buffer(true)
+        .parse((res, callback) => {
+          const chunks: Buffer[] = [];
+          res.on('data', (chunk: Buffer) => chunks.push(chunk));
+          res.on('end', () => callback(null, Buffer.concat(chunks)));
+        })
+        .expect(200);
+      expect((zipRes.body as Buffer).subarray(0, 2).toString()).toBe('PK');
+
+      // Printable poster, rendered by a background job and polled.
+      const jobRes = await request(server).post(admin('/poster')).set('Authorization', adminAuth).send({ format: 'A3' }).expect(201);
+      const poster = await waitFor(async () => {
+        const res = await request(server).get(admin(`/poster/${jobRes.body.jobId}`)).set('Authorization', adminAuth).expect(200);
+        return ['completed', 'failed'].includes(res.body.status) ? res.body : null;
+      }, 60000);
+      expect(poster).toEqual(expect.objectContaining({ status: 'completed', count: 1 }));
+      expect(poster.pdfUrl).toMatch(/\.pdf$/);
+    },
+    150000,
+  );
 });
 
 async function waitFor<T>(probe: () => Promise<T | null>, timeoutMs = 20000): Promise<T> {

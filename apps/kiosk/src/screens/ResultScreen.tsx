@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Printer, Sparkles } from 'lucide-react';
@@ -6,7 +6,8 @@ import { useKiosk } from '../state/kiosk-context';
 import { useIdleReset } from '../hooks/useIdleReset';
 import { Button } from '../components/Button';
 import { QrBlock } from '../components/QrBlock';
-import { API_URL } from '../lib/api';
+import { API_URL, api } from '../lib/api';
+import { printPortrait } from '../lib/print';
 
 const RESULT_RESET_MS = 20000;
 
@@ -14,6 +15,8 @@ export function ResultScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { state, dispatch } = useKiosk();
+  const [printing, setPrinting] = useState(false);
+  const [printed, setPrinted] = useState(false);
 
   useEffect(() => {
     if (!state.portraitResult || !state.participant) navigate('/', { replace: true });
@@ -37,6 +40,21 @@ export function ResultScreen() {
   });
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage ?? '')}`;
 
+  async function print() {
+    if (!state.portraitResult || !state.participant || !state.portraitId) return;
+    setPrinting(true);
+    try {
+      await printPortrait(`${downloadUrl}/image`, state.config?.branding.eventName ?? '');
+      setPrinted(true);
+      // Statistics only: a failure here must not bother the participant.
+      api.recordPrint(state.portraitId).catch(() => undefined);
+    } catch {
+      // The print dialog could not open (no printer configured on the tablet): nothing to show.
+    } finally {
+      setPrinting(false);
+    }
+  }
+
   return (
     <div className="kiosk-shell items-center gap-6">
       <h1 className="text-center text-2xl font-bold">
@@ -59,10 +77,11 @@ export function ResultScreen() {
       </div>
 
       <div className="flex w-full flex-col gap-3">
-        <button disabled className="btn-secondary gap-2 opacity-40" title="V2">
-          <Printer size={18} />
-          {t('result.print')}
-        </button>
+        {state.config?.printEnabled && (
+          <Button variant="secondary" icon={<Printer size={18} />} onClick={print} disabled={printing}>
+            {printed ? t('result.printed') : t('result.print')}
+          </Button>
+        )}
         <Button
           variant="secondary"
           icon={<Sparkles size={18} />}

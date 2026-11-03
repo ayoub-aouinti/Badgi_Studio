@@ -20,9 +20,10 @@ interface ShellOptions {
   title: string;
   primaryColor: string;
   body: string;
+  wide?: boolean;
 }
 
-function shell({ title, primaryColor, body }: ShellOptions): string {
+function shell({ title, primaryColor, body, wide }: ShellOptions): string {
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -40,7 +41,11 @@ function shell({ title, primaryColor, body }: ShellOptions): string {
   .event { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
   h1 { margin: 6px 0 0; font-size: 24px; line-height: 1.25; }
   .tagline { margin: 6px 0 0; color: #52606D; font-size: 14px; }
-  img { width: 100%; border-radius: 16px; box-shadow: 0 8px 24px rgba(14, 27, 44, .15); display: block; }
+  img, video { width: 100%; border-radius: 16px; box-shadow: 0 8px 24px rgba(14, 27, 44, .15); display: block; }
+  main.wide { max-width: 1200px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .grid a { text-decoration: none; color: inherit; font-size: 13px; text-align: center; }
+  .grid img { border-radius: 10px; box-shadow: none; aspect-ratio: 1; object-fit: cover; margin-bottom: 4px; }
   .actions { display: flex; flex-direction: column; gap: 10px; }
   .btn { display: block; text-align: center; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 16px;
     text-decoration: none; border: 0; cursor: pointer; font-family: inherit; }
@@ -51,7 +56,7 @@ function shell({ title, primaryColor, body }: ShellOptions): string {
   .empty { text-align: center; padding: 48px 0; }
 </style>
 </head>
-<body><main>${body}</main></body>
+<body><main${wide ? ' class="wide"' : ''}>${body}</main></body>
 </html>`;
 }
 
@@ -62,10 +67,19 @@ export interface PortraitPageData {
   tagline?: string;
   primaryColor: string;
   purgeAt: Date;
+  hasVideo: boolean;
+}
+
+export interface GalleryPageData {
+  eventName: string;
+  tagline?: string;
+  primaryColor: string;
+  portraits: { code: string; firstName: string }[];
 }
 
 export function renderPortraitPage(data: PortraitPageData): string {
   const imagePath = `/p/${encodeURIComponent(data.code)}/image`;
+  const videoPath = `/p/${encodeURIComponent(data.code)}/video`;
   const purgeDate = data.purgeAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   const body = `
   <header>
@@ -73,9 +87,14 @@ export function renderPortraitPage(data: PortraitPageData): string {
     <h1>Bonjour ${escapeHtml(data.firstName)}, voici votre portrait</h1>
     ${data.tagline ? `<p class="tagline">${escapeHtml(data.tagline)}</p>` : ''}
   </header>
-  <img src="${imagePath}" alt="Portrait de ${escapeHtml(data.firstName)}">
+  ${
+    data.hasVideo
+      ? `<video src="${videoPath}" poster="${imagePath}" autoplay muted playsinline controls></video>`
+      : `<img src="${imagePath}" alt="Portrait de ${escapeHtml(data.firstName)}">`
+  }
   <div class="actions">
     <a class="btn btn-primary" href="${imagePath}?download=1" download>Télécharger en HD</a>
+    ${data.hasVideo ? `<a class="btn btn-secondary" href="${videoPath}?download=1" download>Télécharger la vidéo du dessin</a>` : ''}
     <button class="btn btn-secondary" id="share" hidden>Partager</button>
   </div>
   <p class="note">Ce portrait sera supprimé automatiquement le ${escapeHtml(purgeDate)}.</p>
@@ -103,4 +122,24 @@ export function renderNotFoundPage(): string {
     (les portraits sont conservés pendant une durée limitée).</p>
   </div>`,
   });
+}
+
+export function renderGalleryPage(data: GalleryPageData): string {
+  const tiles = data.portraits
+    .map(
+      (p) =>
+        `<a href="/p/${encodeURIComponent(p.code)}/image" target="_blank" rel="noopener">` +
+        `<img src="/p/${encodeURIComponent(p.code)}/image" alt="Portrait de ${escapeHtml(p.firstName)}" loading="lazy">` +
+        `${escapeHtml(p.firstName)}</a>`,
+    )
+    .join('');
+  const body = `
+  <header>
+    <p class="event">${escapeHtml(data.eventName)}</p>
+    <h1>Galerie des portraits</h1>
+    ${data.tagline ? `<p class="tagline">${escapeHtml(data.tagline)}</p>` : ''}
+  </header>
+  ${data.portraits.length ? `<div class="grid">${tiles}</div>` : '<p class="note">Aucun portrait pour le moment.</p>'}
+  <p class="note">${data.portraits.length} portrait${data.portraits.length > 1 ? 's' : ''} · uniquement les participants ayant accepté l'affichage.</p>`;
+  return shell({ title: `Galerie — ${data.eventName}`, primaryColor: data.primaryColor, body, wide: true });
 }

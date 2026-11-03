@@ -12,6 +12,7 @@ import { SketchService } from '../sketch/sketch.service';
 import { BackgroundRemovalService } from '../segmentation/background-removal.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { DeliveriesService } from '../deliveries/deliveries.service';
+import { VideoService } from '../video/video.service';
 import { CONTENT_MODERATOR, ContentModerator } from '../moderation/content-moderator.interface';
 import { PORTRAIT_GENERATION_QUEUE } from '../queue/queue.module';
 
@@ -35,6 +36,7 @@ export class PortraitGenerationProcessor extends WorkerHost {
     private readonly realtime: RealtimeGateway,
     private readonly deliveries: DeliveriesService,
     @Inject(CONTENT_MODERATOR) private readonly moderator: ContentModerator,
+    private readonly video: VideoService,
   ) {
     super();
   }
@@ -170,6 +172,9 @@ export class PortraitGenerationProcessor extends WorkerHost {
     // The portrait is already READY: a delivery problem must not re-run the generation job.
     await this.deliveries.enqueueForPortrait(portrait.id).catch((error: Error) => {
       this.logger.error(`Could not enqueue deliveries for ${portrait.id}: ${error.message}`);
+    });
+    await this.video.enqueue(portrait.id).catch((error: Error) => {
+      this.logger.error(`Could not enqueue the drawing video for ${portrait.id}: ${error.message}`);
     });
   }
 

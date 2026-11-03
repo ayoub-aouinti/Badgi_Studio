@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { STORAGE_DRIVER, StorageService } from '../storage/storage.interface';
-import { PortraitPageData } from './public-page';
+import { GalleryPageData, PortraitPageData } from './public-page';
 
 const PUBLIC_CODE = /^[0-9A-F]{10}$/;
 
@@ -42,6 +42,35 @@ export class PublicService {
       tagline: event.studioConfig?.tagline ?? undefined,
       primaryColor: event.studioConfig?.primaryColor ?? '#0B6E69',
       purgeAt: portrait.purgeAt,
+      hasVideo: Boolean(portrait.videoKey),
+    };
+  }
+
+  async getVideo(code: string): Promise<{ video: Buffer; filename: string } | null> {
+    const portrait = await this.findAvailable(code);
+    if (!portrait?.videoKey) return null;
+    return {
+      video: await this.storage.get(portrait.videoKey),
+      filename: `portrait-${portrait.publicCode}.mp4`,
+    };
+  }
+
+  // Opt-in per event (galleryEnabled) and limited to the wall: the participants who agreed to
+  // be displayed, and portraits the organiser did not remove or reject.
+  async getGallery(token: string): Promise<GalleryPageData | null> {
+    if (!/^[0-9a-f-]{36}$/i.test(token)) return null;
+    const config = await this.prisma.studioConfig.findUnique({ where: { galleryToken: token }, include: { event: true } });
+    if (!config?.galleryEnabled) return null;
+    const portraits = await this.prisma.portrait.findMany({
+      where: { session: { kiosk: { eventId: config.eventId } }, onWall: true, purgedAt: null, status: 'READY' },
+      orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
+      select: { publicCode: true, session: { select: { participant: { select: { firstName: true } } } } },
+    });
+    return {
+      eventName: config.event.name,
+      tagline: config.tagline ?? undefined,
+      primaryColor: config.primaryColor,
+      portraits: portraits.map((p) => ({ code: p.publicCode, firstName: p.session.participant.firstName })),
     };
   }
 

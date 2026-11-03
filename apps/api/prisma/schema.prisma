@@ -27,24 +27,29 @@ model Event {
 // --- Badgi Studio tables ---
 
 model StudioConfig {
-  id            String  @id @default(uuid())
-  eventId       String  @unique @map("event_id")
-  enabled       Boolean @default(false)
+  id             String  @id @default(uuid())
+  eventId        String  @unique @map("event_id")
+  enabled        Boolean @default(false)
   // Branding, edited from the admin space and applied to the kiosk, wall and portrait frame.
-  logoKey       String? @map("logo_key")
-  tagline       String?
-  primaryColor  String  @default("#0B6E69") @map("primary_color")
-  accentColor   String  @default("#5FD3C8") @map("accent_color")
+  logoKey        String? @map("logo_key")
+  tagline        String?
+  primaryColor   String  @default("#0B6E69") @map("primary_color")
+  accentColor    String  @default("#5FD3C8") @map("accent_color")
   // none | banner | border | polaroid
-  frameStyle    String  @default("banner") @map("frame_style")
-  frameColor    String  @default("#0E1B2C") @map("frame_color")
-  frameWidth    Int     @default(32) @map("frame_width")
-  showName      Boolean @default(true) @map("show_name")
-  showLogo      Boolean @default(true) @map("show_logo")
-  retentionDays Int     @default(30) @map("retention_days")
+  frameStyle     String  @default("banner") @map("frame_style")
+  frameColor     String  @default("#0E1B2C") @map("frame_color")
+  frameWidth     Int     @default(32) @map("frame_width")
+  showName       Boolean @default(true) @map("show_name")
+  showLogo       Boolean @default(true) @map("show_logo")
+  retentionDays  Int     @default(30) @map("retention_days")
   // Every portrait waits for the organiser's approval before reaching the wall.
-  preModeration Boolean @default(false) @map("pre_moderation")
-  wallToken     String  @unique @map("wall_token")
+  preModeration  Boolean @default(false) @map("pre_moderation")
+  // Kiosk "Imprimer" button (a printer is connected to the tablet for this event).
+  printEnabled   Boolean @default(false) @map("print_enabled")
+  // Public online gallery /g/:galleryToken of the portraits shown on the wall.
+  galleryEnabled Boolean @default(false) @map("gallery_enabled")
+  galleryToken   String  @unique @default(uuid()) @map("gallery_token")
+  wallToken      String  @unique @map("wall_token")
 
   event  Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   styles StudioStyle[]
@@ -179,6 +184,8 @@ model Portrait {
   resultKey         String?          @map("result_key")
   framedKey         String?          @map("framed_key")
   sketchKey         String?          @map("sketch_key")
+  // MP4 of the live drawing (ink, colour, frame), rendered after the portrait is ready.
+  videoKey          String?          @map("video_key")
   status            PortraitStatus   @default(QUEUED)
   providerRequestId String?          @map("provider_request_id")
   costUsd           Decimal?         @map("cost_usd") @db.Decimal(10, 4)

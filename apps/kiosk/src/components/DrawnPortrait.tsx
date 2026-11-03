@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pencil } from 'lucide-react';
+import { BRUSH_WIDTH_RATIO, brushStrokes, polylineLength, truncatePolyline, type Point } from '@badgi-studio/shared';
 
 export type DrawPhase = 'loading' | 'ink' | 'color' | 'frame' | 'done';
 
@@ -18,7 +19,6 @@ interface DrawnPortraitProps {
 
 const VIEWBOX = 480; // matches apps/api SketchService TRACE_SIZE
 const FRAME_MS = 900;
-const BRUSH_ROWS = 9;
 
 // "Live drawing" performance (docs/SCREENS.md écran 6b): the pen inks the traced outline
 // stroke by stroke, then the colour is brushed in one stroke at a time, then the congress
@@ -152,7 +152,7 @@ export function DrawnPortrait({
       const strokes = brushStrokes(size);
       const strokeLengths = strokes.map(polylineLength);
       const total = strokeLengths.reduce((sum, l) => sum + l, 0);
-      const width = (size / BRUSH_ROWS) * 1.45;
+      const width = size * BRUSH_WIDTH_RATIO;
 
       const start = performance.now();
       const tick = (now: number) => {
@@ -221,54 +221,6 @@ export function DrawnPortrait({
       />
     </div>
   );
-}
-
-type Point = [number, number];
-
-// Serpentine rows (left→right, then right→left) with a little vertical wobble, like a
-// painter filling the canvas; rows overlap so the whole image ends up covered.
-function brushStrokes(size: number): Point[][] {
-  const rowHeight = size / BRUSH_ROWS;
-  const steps = 8;
-  const strokes: Point[][] = [];
-  for (let row = 0; row < BRUSH_ROWS; row++) {
-    const y = rowHeight * (row + 0.5);
-    const points: Point[] = [];
-    for (let s = 0; s <= steps; s++) {
-      const x = -rowHeight * 0.5 + ((size + rowHeight) * s) / steps;
-      const wobble = Math.sin(row * 1.7 + s * 1.3) * rowHeight * 0.18;
-      points.push([x, y + wobble]);
-    }
-    strokes.push(row % 2 === 0 ? points : points.reverse());
-  }
-  return strokes;
-}
-
-function polylineLength(points: Point[]): number {
-  let length = 0;
-  for (let i = 1; i < points.length; i++) {
-    length += Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]);
-  }
-  return length;
-}
-
-function truncatePolyline(points: Point[], length: number): Point[] {
-  const out: Point[] = [points[0]];
-  let remaining = length;
-  for (let i = 1; i < points.length && remaining > 0; i++) {
-    const [x0, y0] = points[i - 1];
-    const [x1, y1] = points[i];
-    const segment = Math.hypot(x1 - x0, y1 - y0);
-    if (segment <= remaining) {
-      out.push(points[i]);
-      remaining -= segment;
-    } else {
-      const k = remaining / segment;
-      out.push([x0 + (x1 - x0) * k, y0 + (y1 - y0) * k]);
-      remaining = 0;
-    }
-  }
-  return out;
 }
 
 function drawPolyline(ctx: CanvasRenderingContext2D, points: Point[], width: number, offsetY: number) {

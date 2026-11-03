@@ -62,6 +62,7 @@
     "scanDownload": "امسح للتنزيل بجودة عالية",
     "scanWhatsapp": "امسح لاستلامها عبر واتساب",
     "print": "طباعة",
+    "printed": "بدأت الطباعة",
     "tryAnotherStyle": "تجربة أسلوب آخر",
     "finish": "إنهاء",
     "whatsappMessage": "مرحباً {{firstName}}، هذه صورتك من {{event}}! النسخة عالية الجودة: {{link}}"
